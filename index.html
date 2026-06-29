@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sagan Sourcing Matcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f5f2ed; --bg-card:#ffffff; --bg-input:#f5f3f0; --border:#e3ded8;
+    --text:#093a3e; --text-dim:#6b7264; --accent:#2197ff; --accent-hover:#1a7fd9;
+    --accent-glow:rgba(33,151,255,0.12); --green:#5ce3b0; --green-deep:#1f9d6b;
+    --orange:#f5b800; --red:#ff7455; --shadow:0 1px 3px rgba(9,58,62,.06),0 6px 24px rgba(9,58,62,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+  h1,h2,h3,.font-head{font-family:'Space Grotesk','Inter',sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  /* header */
+  header{display:flex;align-items:center;gap:14px;padding:12px 22px;background:var(--bg-card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  header img{height:26px}
+  header .title{font-family:'Space Grotesk';font-weight:600;font-size:16px;letter-spacing:-.2px}
+  header .pill{font-size:11px;color:var(--text-dim);background:var(--bg-input);border:1px solid var(--border);padding:3px 9px;border-radius:20px}
+  header .spacer{flex:1}
+  /* layout */
+  .wrap{display:grid;grid-template-columns:380px 1fr;gap:0;min-height:calc(100vh - 51px)}
+  .panel{padding:20px;border-right:1px solid var(--border);background:var(--bg-card);overflow-y:auto;max-height:calc(100vh - 51px);position:sticky;top:51px}
+  .results{padding:22px 26px;overflow-y:auto}
+  /* form */
+  label.lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin:0 0 5px}
+  textarea,input,select{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-family:inherit;font-size:13px}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+  textarea{resize:vertical}
+  .fg{margin-bottom:14px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btn{border:none;border-radius:9px;padding:10px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+  .btn-accent{background:var(--accent);color:#fff;width:100%}
+  .btn-accent:hover{background:var(--accent-hover);box-shadow:0 4px 14px var(--accent-glow)}
+  .btn-accent:disabled{opacity:.5;cursor:not-allowed}
+  .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+  .btn-ghost:hover{border-color:#bbb;color:var(--text);background:var(--bg-input)}
+  .btn-sm{padding:6px 10px;font-size:12px}
+  .hint{font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+  .section-title{font-family:'Space Grotesk';font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+  .section-title::after{content:"";flex:1;height:1px;background:var(--border)}
+  /* saved searches */
+  .saved-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:9px;margin-bottom:7px;background:var(--bg-input);cursor:pointer;transition:.15s}
+  .saved-item:hover{border-color:var(--accent);background:#fff}
+  .saved-item .si-main{flex:1;min-width:0}
+  .saved-item .si-title{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .saved-item .si-meta{font-size:10.5px;color:var(--text-dim)}
+  .icon-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:3px;border-radius:5px}
+  .icon-btn:hover{color:var(--red);background:rgba(255,116,85,.1)}
+  /* results */
+  .res-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .res-head h2{font-size:18px;font-weight:600}
+  .res-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative;display:flex;flex-direction:column;gap:10px;transition:.15s}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+  .card-top{display:flex;align-items:flex-start;gap:12px}
+  .score{flex-shrink:0;width:52px;height:52px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;color:#fff;line-height:1}
+  .score .n{font-size:19px}.score .l{font-size:8px;font-weight:600;opacity:.9;letter-spacing:.5px}
+  .ci{flex:1;min-width:0}
+  .cname{font-family:'Space Grotesk';font-weight:600;font-size:16px;letter-spacing:-.2px}
+  .cmeta{font-size:11.5px;color:var(--text-dim);margin-top:2px;display:flex;flex-wrap:wrap;gap:4px 10px}
+  .rank{position:absolute;top:-9px;left:-9px;background:var(--text);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Space Grotesk'}
+  .verdict{font-size:13px;font-weight:600;line-height:1.4}
+  .reasons{list-style:none;display:flex;flex-direction:column;gap:4px}
+  .reasons li{font-size:12px;color:var(--text-dim);padding-left:16px;position:relative;line-height:1.45}
+  .reasons li::before{content:"✓";position:absolute;left:0;color:var(--green-deep);font-weight:700}
+  .concern{font-size:11.5px;color:#b5651d;padding-left:16px;position:relative;line-height:1.4}
+  .concern::before{content:"!";position:absolute;left:2px;font-weight:700}
+  .summary{font-size:12px;color:var(--text-dim);line-height:1.5;max-height:60px;overflow:hidden;position:relative;cursor:pointer}
+  .summary.open{max-height:none}
+  .summary .fade{position:absolute;bottom:0;left:0;right:0;height:22px;background:linear-gradient(transparent,var(--bg-card))}
+  .cbtns{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;display:inline-flex;gap:5px;align-items:center}
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+  .chip.off{opacity:.4;pointer-events:none}
+  .cfoot{display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);padding-top:10px;margin-top:auto}
+  .cb{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;cursor:pointer;user-select:none}
+  .cb input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+  .email{font-size:11px;color:var(--text-dim);margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+  /* empty / loading */
+  .empty{text-align:center;padding:70px 20px;color:var(--text-dim)}
+  .empty .big{font-size:42px;margin-bottom:12px}
+  .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  .spinner.dark{border-color:var(--border);border-top-color:var(--accent)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* progress steps */
+  .steps{display:flex;flex-direction:column;gap:8px;max-width:420px;margin:30px auto}
+  .step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-dim)}
+  .step .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px}
+  .step.active{color:var(--text);font-weight:600}.step.active .dot{border-color:var(--accent)}
+  .step.done .dot{background:var(--green);border-color:var(--green);color:#073}
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(9,58,62,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:16px;padding:26px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal h3{font-size:18px;margin-bottom:6px}
+  .toast{position:fixed;bottom:22px;right:22px;background:#fff;border:1px solid var(--border);border-left-width:4px;border-radius:10px;padding:13px 16px;box-shadow:0 10px 30px rgba(0,0,0,.15);z-index:200;display:none;max-width:340px;font-size:13px}
+  .multiselect{max-height:120px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;background:var(--bg-input);padding:6px}
+  .ms-opt{display:flex;align-items:center;gap:7px;padding:3px 5px;font-size:12.5px;border-radius:6px;cursor:pointer}
+  .ms-opt:hover{background:#fff}
+  .ms-opt input{width:14px;height:14px;accent-color:var(--accent)}
+  @media(max-width:880px){.wrap{grid-template-columns:1fr}.panel{position:relative;max-height:none;border-right:none;border-bottom:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<header>
+  <img src="https://saganrecruitment.com/wp-content/uploads/2025/10/Sagan-Logo-2-e1759568299542.png" alt="Sagan" />
+  <span class="title">Sourcing Matcher</span>
+  <span class="pill" id="poolPill">loading pool…</span>
+  <div class="spacer"></div>
+  <button class="btn btn-ghost btn-sm" onclick="openSettings()">⚙ Settings</button>
+</header>
+
+<div class="wrap">
+  <!-- LEFT PANEL -->
+  <div class="panel">
+    <div class="fg">
+      <label class="lbl">Job Description <span style="color:var(--red)">*</span></label>
+      <textarea id="jd" rows="9" placeholder="Paste the robust JD here — role, responsibilities, must-haves, nice-to-haves, location/timezone, salary budget…"></textarea>
+    </div>
+    <div class="fg">
+      <label class="lbl">Kickoff Call Transcript <span style="font-weight:400;text-transform:none;color:var(--text-dim)">(optional)</span></label>
+      <textarea id="transcript" rows="4" placeholder="Paste the kickoff transcript if available — extra context sharpens the match."></textarea>
+    </div>
+
+    <div class="section-title">Hard filters</div>
+    <div class="fg">
+      <label class="lbl">Locations (optional)</label>
+      <input id="countrySearch" placeholder="Filter countries…" oninput="renderCountryOpts(this.value)" style="margin-bottom:6px"/>
+      <div class="multiselect" id="countryBox"></div>
+      <div class="hint">Leave all unchecked to consider every location.</div>
+    </div>
+    <div class="row2 fg">
+      <div>
+        <label class="lbl">Max monthly salary (USD)</label>
+        <input id="maxSalary" type="number" placeholder="e.g. 2500" />
+      </div>
+      <div>
+        <label class="lbl">Shortlist size</label>
+        <input id="topN" type="number" value="15" min="1" max="40" />
+      </div>
+    </div>
+    <div class="fg">
+      <label class="lbl">Must-have keywords (optional)</label>
+      <input id="keywords" placeholder="comma-separated, e.g. QuickBooks, AR, SaaS" />
+      <div class="hint">A candidate must mention at least one (matched in their profile text).</div>
+    </div>
+
+    <button class="btn btn-accent" id="findBtn" onclick="runSearch()">⚡ Find Candidates</button>
+    <div class="hint" id="findHint" style="text-align:center;margin-top:8px"></div>
+
+    <div class="section-title">Saved searches</div>
+    <div id="savedList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="exportSearches()">⬇ Export</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('importFile').click()">⬆ Import</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importSearches(this.files[0])"/>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+    <div class="empty">
+      <div class="big">🎯</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text)">Paste a JD and hit Find Candidates</div>
+      <div style="margin-top:6px">The matcher searches your sourcing base (video-ready candidates, last 6 months),<br/>then Claude ranks the best fits against this specific role.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <p class="hint" style="margin-bottom:16px">Keys are stored only in this browser (localStorage). They are sent only directly to Anthropic/GitHub. Matching uses an on-device model — no embedding key needed.</p>
+    <div class="fg"><label class="lbl">Anthropic API key (matching)</label><input id="kAnthropic" type="password" placeholder="sk-ant-…"/></div>
+    <div class="fg"><label class="lbl">GitHub PAT (publish pages)</label><input id="kGithub" type="password" placeholder="ghp_…"/></div>
+    <div class="section-title">Your Talent Advisor profile</div>
+    <div class="row2">
+      <div class="fg"><label class="lbl">Name</label><input id="taName" placeholder="Jesus Pacheco"/></div>
+      <div class="fg"><label class="lbl">Title</label><input id="taTitle" placeholder="Head of Revenue"/></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label class="lbl">Email</label><input id="taEmail" placeholder="jesus.p@getsagan.com"/></div>
+      <div class="fg"><label class="lbl">Booking link</label><input id="taBooking" placeholder="https://cal.com/…"/></div>
+    </div>
+    <div class="fg"><label class="lbl">Photo URL</label><input id="taPhoto" placeholder="https://…"/></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-accent" style="flex:1" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRESENTATION MODAL -->
+<div class="modal-bg" id="presentModal">
+  <div class="modal">
+    <h3>Create Presentation Page</h3>
+    <p class="hint" style="margin-bottom:16px">Building a Sagan-branded page for <strong id="pCount">0</strong> selected candidate(s). It generates a preview first — <strong>nothing publishes until you confirm</strong>.</p>
+    <div class="row2">
+      <div class="fg"><label class="lbl">Member / Company <span style="color:var(--red)">*</span></label><input id="pMember" placeholder="e.g. Rubicon"/></div>
+      <div class="fg"><label class="lbl">Role title <span style="color:var(--red)">*</span></label><input id="pRole" placeholder="e.g. Senior Bookkeeper"/></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label class="lbl">Batch #</label><input id="pBatch" type="number" value="1" min="1"/><div class="hint">Batch 2+ publishes to a new <code>-b#</code> repo.</div></div>
+      <div class="fg"><label class="lbl">Date</label><input id="pDate" type="date"/></div>
+    </div>
+    <div class="fg"><label class="lbl">Intro / selection rationale (optional)</label><textarea id="pIntro" rows="3" placeholder="A short note to the member on why these candidates…"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closePresent()">Cancel</button>
+      <button class="btn btn-accent" style="flex:1" onclick="genPresentation()">👁 Generate &amp; Preview</button>
+    </div>
+    <div id="publishRow" style="display:none;gap:10px;margin-top:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="downloadPresentation()">⬇ Download HTML</button>
+      <button class="btn btn-accent" id="publishBtn" style="flex:1.4;background:var(--green-deep)" onclick="publishPresentation()">🚀 Publish to GitHub Pages</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="keys.local.js" onerror="void 0"></script>
+<script src="present.js"></script>
+<script>
+/* ============ config & keys ============ */
+const EMB_DIM=384, EMB_HF='Xenova/all-MiniLM-L6-v2', CLAUDE_MODEL='claude-sonnet-4-6';
+const OUTREACH_URL='https://outreach.saganrecruitment.com/';
+const LS={anthropic:'sm_anthropic',github:'sm_github',ta:'sm_ta_profile',searches:'sm_searches'};
+const getKey=k=>{try{return localStorage.getItem(LS[k])||''}catch(e){return ''}};
+
+/* ============ state ============ */
+let CANDS=[], EMB=null, EMB_META=null, RESULTS=[], LOADED=false;
+
+/* ============ toast ============ */
+function toast(msg,type='info',ms=3500){const t=document.getElementById('toast');
+  t.style.borderLeftColor={info:'var(--accent)',success:'var(--green)',error:'var(--red)',load:'var(--orange)'}[type];
+  t.innerHTML=msg;t.style.display='block';clearTimeout(t._t);if(ms)t._t=setTimeout(()=>t.style.display='none',ms);}
+
+/* ============ data load ============ */
+async function loadData(){
+  const pill=document.getElementById('poolPill');
+  try{
+    pill.textContent='loading candidates…';
+    CANDS=await (await fetch('data/candidates.json')).json();
+    pill.textContent='loading index…';
+    EMB_META=await (await fetch('data/embeddings.json')).json();
+    const buf=await (await fetch('data/embeddings.u8')).arrayBuffer();
+    EMB=new Int8Array(buf);
+    LOADED=true;
+    pill.textContent=CANDS.length.toLocaleString()+' candidates · last 6 mo';
+    buildCountryOpts(); renderSaved();
+    toast('Pool loaded: '+CANDS.length.toLocaleString()+' video-ready candidates','success');
+  }catch(e){pill.textContent='⚠ index not built';toast('Could not load candidate index. Run the pipeline first. ('+e.message+')','error',8000);}
+}
+
+/* ============ country options ============ */
+let COUNTRIES=[];
+function buildCountryOpts(){
+  const c={};CANDS.forEach(r=>{const k=(r.country||'').trim();if(k)c[k]=(c[k]||0)+1;});
+  COUNTRIES=Object.entries(c).filter(([k,v])=>v>=3).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({k,v}));
+  renderCountryOpts('');
+}
+function renderCountryOpts(q){
+  q=(q||'').toLowerCase();
+  const box=document.getElementById('countryBox');
+  const sel=getSelectedCountries();
+  box.innerHTML=COUNTRIES.filter(c=>c.k.toLowerCase().includes(q)).slice(0,60).map(c=>
+    `<label class="ms-opt"><input type="checkbox" value="${esc(c.k)}" ${sel.includes(c.k)?'checked':''}> ${esc(c.k)} <span style="color:var(--text-dim);font-size:10px">(${c.v})</span></label>`).join('')||'<div class="hint" style="padding:6px">No matches</div>';
+}
+function getSelectedCountries(){return [...document.querySelectorAll('#countryBox input:checked')].map(i=>i.value);}
+
+/* ============ embedding (query) — local, in-browser via transformers.js ============ */
+let _extractor=null, _extractorLoading=null;
+async function getExtractor(){
+  if(_extractor) return _extractor;
+  if(_extractorLoading) return _extractorLoading;
+  _extractorLoading=(async()=>{
+    toast('⏳ Loading the matcher model (one-time ~25MB download)…','load',0);
+    const t=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+    t.env.allowLocalModels=false; t.env.useBrowserCache=true;
+    _extractor=await t.pipeline('feature-extraction', EMB_HF);
+    toast('Matcher model ready','success',2000);
+    return _extractor;
+  })();
+  return _extractorLoading;
+}
+async function embedQuery(text){
+  const ex=await getExtractor();
+  const out=await ex(text.slice(0,4000),{pooling:'mean',normalize:true}); // 384-d, unit-normalized — same space as the index
+  return Array.from(out.data);
+}
+
+/* ============ vector search ============ */
+function cosineTop(qvec, candIdxs, k){
+  const scores=[];
+  for(const i of candIdxs){
+    const base=i*EMB_DIM; let dot=0;
+    for(let d=0;d<EMB_DIM;d++) dot+=qvec[d]*(EMB[base+d]/127);
+    scores.push([i,dot]);
+  }
+  scores.sort((a,b)=>b[1]-a[1]);
+  return scores.slice(0,k);
+}
+
+/* ============ hard filters ============ */
+function parseSalary(s){if(!s)return null;const m=(''+s).replace(/[, ]/g,'').match(/\$?(\d{3,6})/);return m?parseInt(m[1]):null;}
+function applyHardFilters(){
+  const sel=getSelectedCountries();
+  const maxSal=parseInt(document.getElementById('maxSalary').value)||null;
+  const kw=document.getElementById('keywords').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  const out=[];
+  for(let i=0;i<CANDS.length;i++){
+    const c=CANDS[i];
+    if(sel.length && !sel.includes((c.country||'').trim())) continue;
+    if(maxSal){const t=parseSalary(c.tcomp);if(t!==null && t>maxSal) continue;}
+    if(kw.length){const t=(c.text||'').toLowerCase();if(!kw.some(k=>t.includes(k))) continue;}
+    out.push(i);
+  }
+  return out;
+}
+
+/* ============ Claude rerank ============ */
+async function claudeRerank(jd,transcript,cands,topN){
+  const key=getKey('anthropic'); if(!key) throw new Error('Missing Anthropic key (Settings)');
+  const profiles=cands.map((c,idx)=>`[#${idx}] ${c.name} — ${c.role||'role n/a'} — ${c.country||'loc n/a'}\n${(c.text||'').slice(0,750)}`).join('\n\n');
+  const prompt=`You are Sagan's senior talent matcher. Rank candidates for THIS role with rigor and zero hallucination — judge ONLY on each candidate's provided profile text.
+
+=== JOB DESCRIPTION ===
+${jd.slice(0,6000)}
+${transcript?'\n=== KICKOFF CALL NOTES ===\n'+transcript.slice(0,4000):''}
+
+=== CANDIDATES (${cands.length}) ===
+${profiles}
+
+Select the ${topN} STRONGEST matches for this specific role. Score each 0-100 on genuine fit (skills, domain, seniority, location/timezone, comp realism). Be discriminating: only give 85+ to truly excellent fits. If fewer than ${topN} are credible, return fewer.
+
+Respond with STRICT JSON only, no prose:
+{"results":[{"idx":<number from #>,"score":<0-100>,"verdict":"<8-12 word headline of why they fit>","reasons":["<specific, evidence-based>","<...>"],"concern":"<one honest gap or empty string>"}]}
+Order by score desc.`;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:4500,messages:[{role:'user',content:prompt}]})});
+  if(!r.ok) throw new Error('Claude: '+(await r.text()).slice(0,180));
+  let txt=(await r.json()).content[0].text.trim();
+  txt=txt.replace(/^```json?\s*/i,'').replace(/```$/,'').trim();
+  const m=txt.match(/\{[\s\S]*\}/); if(!m) throw new Error('Claude returned non-JSON');
+  return JSON.parse(m[0]).results;
+}
+
+/* ============ search orchestration ============ */
+async function runSearch(){
+  if(!LOADED){toast('Index still loading…','load');return;}
+  const jd=document.getElementById('jd').value.trim();
+  if(jd.length<40){toast('Paste a fuller JD (at least a few sentences).','error');return;}
+  const transcript=document.getElementById('transcript').value.trim();
+  const topN=Math.min(40,Math.max(1,parseInt(document.getElementById('topN').value)||15));
+  const btn=document.getElementById('findBtn');btn.disabled=true;
+  const res=document.getElementById('results');
+  const setStep=(s)=>res.querySelectorAll('.step').forEach(el=>{const k=el.dataset.k;el.className='step'+(k<s?' done':k==s?' active':'');});
+  res.innerHTML=`<div class="steps">
+    <div class="step" data-k="1"><span class="dot">1</span>Applying hard filters</div>
+    <div class="step" data-k="2"><span class="dot">2</span>Embedding the role (Gemini)</div>
+    <div class="step" data-k="3"><span class="dot">3</span>Semantic retrieval over pool</div>
+    <div class="step" data-k="4"><span class="dot">4</span>Claude ranking best fits</div>
+  </div>`;
+  try{
+    setStep(1); await sleep(30);
+    const pool=applyHardFilters();
+    if(!pool.length){res.innerHTML=emptyMsg('No candidates pass your hard filters','Loosen the location/salary/keyword filters and try again.');btn.disabled=false;return;}
+    document.getElementById('findHint').textContent=pool.length.toLocaleString()+' pass filters';
+    setStep(2);
+    const qvec=await embedQuery(jd+'\n'+transcript);
+    setStep(3); await sleep(30);
+    const RETRIEVE=Math.min(100, Math.max(40, topN*6));
+    const top=cosineTop(qvec, pool, RETRIEVE);
+    const shortlist=top.map(([i,s])=>({...CANDS[i],_i:i,_cos:s}));
+    setStep(4);
+    const ranked=await claudeRerank(jd,transcript,shortlist,topN);
+    RESULTS=ranked.map(r=>{const c=shortlist[r.idx];return c?{...c,score:r.score,verdict:r.verdict,reasons:r.reasons||[],concern:r.concern||''}:null;}).filter(Boolean);
+    if(!RESULTS.length){res.innerHTML=emptyMsg('No strong matches found','The pool had candidates but none were a credible fit for this JD.');btn.disabled=false;return;}
+    renderResults();
+    autoSave(jd,transcript);
+  }catch(e){res.innerHTML=emptyMsg('Search failed',esc(e.message));toast(e.message,'error',7000);}
+  btn.disabled=false;
+}
+
+/* ============ render results ============ */
+function scoreColor(s){return s>=85?'#1f9d6b':s>=70?'#2197ff':s>=55?'#f5b800':'#ff7455';}
+function renderResults(){
+  const res=document.getElementById('results');
+  const nSel=RESULTS.filter(r=>r._sel).length;
+  res.innerHTML=`<div class="res-head">
+    <h2>${RESULTS.length} best matches</h2>
+    <span class="pill">${nSel} selected</span>
+    <div class="res-actions">
+      <button class="btn btn-ghost btn-sm" onclick="toggleAll()">Select all</button>
+      <button class="btn btn-ghost btn-sm" onclick="emailSelected()">✉ Email selected</button>
+      <button class="btn btn-accent btn-sm" style="width:auto" onclick="createPresentation()">📄 Create Presentation Page</button>
+    </div></div>
+    <div class="grid" id="grid"></div>`;
+  const grid=document.getElementById('grid');
+  grid.innerHTML=RESULTS.map((r,i)=>cardHTML(r,i)).join('');
+}
+function cardHTML(r,i){
+  const col=scoreColor(r.score);
+  const date=r.created?new Date(r.created).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+  return `<div class="card ${r._sel?'sel':''}" id="card${i}">
+    <div class="rank">${i+1}</div>
+    <div class="card-top">
+      <div class="score" style="background:${col}"><span class="n">${r.score}</span><span class="l">MATCH</span></div>
+      <div class="ci">
+        <div class="cname">${esc(r.name)}</div>
+        <div class="cmeta">
+          ${r.country?`<span>📍 ${esc(r.country)}</span>`:''}
+          ${r.role?`<span>💼 ${esc(r.role)}</span>`:''}
+          <span>🗓 Last applied ${date}</span>
+        </div>
+      </div>
+    </div>
+    <div class="verdict">${esc(r.verdict||'')}</div>
+    <ul class="reasons">${(r.reasons||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    ${r.concern?`<div class="concern">${esc(r.concern)}</div>`:''}
+    <div class="summary" onclick="this.classList.toggle('open')">${esc(r.text||'')}<span class="fade"></span></div>
+    <div class="cbtns">
+      <a class="chip ${r.resume?'':'off'}" href="${esc(r.resume||'#')}" target="_blank">📄 Resume</a>
+      <a class="chip ${r.video?'':'off'}" href="${esc(r.video||'#')}" target="_blank">🎬 Intro Video</a>
+      ${r.linkedin?`<a class="chip" href="${esc(r.linkedin)}" target="_blank">in LinkedIn</a>`:''}
+    </div>
+    <div class="cfoot">
+      <label class="cb"><input type="checkbox" ${r._sel?'checked':''} onchange="toggleSel(${i},this.checked)"> I want to contact them</label>
+      <span class="email" title="${esc(r.email||'')}">${esc(r.email||'no email')}</span>
+    </div>
+  </div>`;
+}
+function toggleSel(i,v){RESULTS[i]._sel=v;document.getElementById('card'+i).classList.toggle('sel',v);updateSelCount();}
+function updateSelCount(){const p=document.querySelector('.res-head .pill');if(p)p.textContent=RESULTS.filter(r=>r._sel).length+' selected';}
+function toggleAll(){const all=RESULTS.every(r=>r._sel);RESULTS.forEach(r=>r._sel=!all);renderResults();}
+
+/* ============ email selected ============ */
+function emailSelected(){
+  const picked=RESULTS.filter(r=>r._sel&&r.email);
+  if(!picked.length){toast('Check "I want to contact them" on at least one candidate (with an email).','error');return;}
+  const emails=picked.map(r=>r.email).join(', ');
+  navigator.clipboard.writeText(emails).then(()=>{
+    toast(`📋 Copied ${picked.length} email${picked.length>1?'s':''}. Opening Outreach — paste into the recipients field.`,'success',6000);
+    window.open(OUTREACH_URL,'_blank');
+  },()=>{prompt('Copy these emails:',emails);});
+}
+
+/* ============ presentation: build → preview → publish (explicit) ============ */
+let _presHTML=null, _presMeta=null;
+function createPresentation(){
+  const picked=RESULTS.filter(r=>r._sel);
+  if(!picked.length){toast('Select the candidates you want to present first (check "I want to contact them" or use Select all).','error');return;}
+  document.getElementById('pRole').value=(document.getElementById('jd').value.split('\n')[0]||'').trim().slice(0,70);
+  document.getElementById('pDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('pCount').textContent=picked.length;
+  document.getElementById('publishRow').style.display='none';
+  _presHTML=null;
+  document.getElementById('presentModal').classList.add('show');
+}
+function closePresent(){document.getElementById('presentModal').classList.remove('show')}
+function genPresentation(){
+  const picked=RESULTS.filter(r=>r._sel);
+  const member=document.getElementById('pMember').value.trim();
+  const role=document.getElementById('pRole').value.trim();
+  if(!member||!role){toast('Member/company and role are required.','error');return;}
+  let adv={};try{adv=JSON.parse(localStorage.getItem(LS.ta)||'{}')}catch(e){}
+  if(!adv.name){toast('Tip: add your Talent Advisor profile in Settings so the page shows your card.','load',5000);}
+  const o={member,role,batchNumber:parseInt(document.getElementById('pBatch').value)||1,
+    batchDate:document.getElementById('pDate').value||new Date().toISOString().slice(0,10),
+    introNote:document.getElementById('pIntro').value.trim(),advisor:adv};
+  _presHTML=buildPresentationHTML(picked,o);
+  _presMeta={member,role,batch:o.batchNumber};
+  const w=window.open('','_blank');
+  if(w){w.document.open();w.document.write(_presHTML);w.document.close();}
+  else{toast('Allow pop-ups to see the preview.','error');}
+  document.getElementById('publishRow').style.display='flex';
+  toast('Preview opened in a new tab. Nothing is published yet — review, then Publish.','success',6000);
+}
+function downloadPresentation(){
+  if(!_presHTML){toast('Generate the page first.','error');return;}
+  const blob=new Blob([_presHTML],{type:'text/html'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=(slugify?slugify(_presMeta.member+'-'+_presMeta.role):'presentation')+'.html';a.click();
+}
+async function publishPresentation(){
+  if(!_presHTML){toast('Generate the page first.','error');return;}
+  if(!getKey('github')){toast('Add your GitHub PAT in Settings to publish.','error');return;}
+  const {member,role,batch}=_presMeta;
+  if(!confirm(`Publish a PUBLIC presentation page to GitHub Pages?\n\nMember: ${member}\nRole: ${role}\nBatch: ${batch}\n\nThis creates/updates a public repo under "wg-dotcom". Nothing in Airtable is touched.`)) return;
+  const btn=document.getElementById('publishBtn');btn.disabled=true;const orig=btn.textContent;btn.textContent='Publishing…';
+  try{
+    const url=await ghPublish(_presHTML,member,role,batch,(s)=>toast(s,'load',0));
+    toast('✅ Published: <a href="'+url+'" target="_blank" style="color:var(--accent);font-weight:600">'+url+'</a> (copied)','success',0);
+    try{await navigator.clipboard.writeText(url);}catch(e){}
+  }catch(e){toast('Publish failed: '+esc(e.message),'error',9000);}
+  btn.disabled=false;btn.textContent=orig;
+}
+
+/* ============ saved searches ============ */
+function loadSearches(){try{return JSON.parse(localStorage.getItem(LS.searches)||'[]')}catch(e){return[]}}
+function storeSearches(a){localStorage.setItem(LS.searches,JSON.stringify(a))}
+function autoSave(jd,transcript){
+  const title=(jd.split('\n')[0]||'Search').slice(0,60);
+  const rec={id:'s'+Date.now(),title,jd,transcript,when:new Date().toISOString(),
+    filters:{countries:getSelectedCountries(),maxSalary:document.getElementById('maxSalary').value,keywords:document.getElementById('keywords').value,topN:document.getElementById('topN').value},
+    results:RESULTS.map(r=>({id:r.id,_i:r._i,name:r.name,score:r.score,verdict:r.verdict,reasons:r.reasons,concern:r.concern,_sel:!!r._sel}))};
+  const all=loadSearches();all.unshift(rec);storeSearches(all.slice(0,100));renderSaved();
+}
+function renderSaved(){
+  const all=loadSearches();const box=document.getElementById('savedList');
+  if(!all.length){box.innerHTML='<div class="hint">No saved searches yet.</div>';return;}
+  box.innerHTML=all.map(s=>`<div class="saved-item" onclick="openSaved('${s.id}')">
+    <div class="si-main"><div class="si-title">${esc(s.title)}</div>
+    <div class="si-meta">${new Date(s.when).toLocaleDateString()} · ${s.results.length} matches</div></div>
+    <button class="icon-btn" onclick="event.stopPropagation();delSaved('${s.id}')">🗑</button></div>`).join('');
+}
+function openSaved(id){
+  const s=loadSearches().find(x=>x.id===id);if(!s)return;
+  document.getElementById('jd').value=s.jd;document.getElementById('transcript').value=s.transcript||'';
+  document.getElementById('maxSalary').value=s.filters.maxSalary||'';
+  document.getElementById('keywords').value=s.filters.keywords||'';
+  document.getElementById('topN').value=s.filters.topN||15;
+  renderCountryOpts('');(s.filters.countries||[]).forEach(c=>{const el=[...document.querySelectorAll('#countryBox input')].find(i=>i.value===c);if(el)el.checked=true;});
+  // rehydrate results from stored ids
+  RESULTS=s.results.map(r=>{const c=CANDS[r._i]||CANDS.find(x=>x.id===r.id)||{};return {...c,score:r.score,verdict:r.verdict,reasons:r.reasons,concern:r.concern,_i:r._i,_sel:r._sel};});
+  renderResults();toast('Loaded saved search','success');
+}
+function delSaved(id){storeSearches(loadSearches().filter(s=>s.id!==id));renderSaved();}
+function exportSearches(){const blob=new Blob([JSON.stringify(loadSearches(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sagan-searches.json';a.click();}
+function importSearches(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const inc=JSON.parse(r.result);const all=loadSearches();const ids=new Set(all.map(s=>s.id));inc.forEach(s=>{if(!ids.has(s.id))all.push(s)});storeSearches(all);renderSaved();toast('Imported '+inc.length+' searches','success');}catch(e){toast('Bad file','error');}};r.readAsText(file);}
+
+/* ============ settings ============ */
+function openSettings(){
+  document.getElementById('kAnthropic').value=getKey('anthropic');
+  document.getElementById('kGithub').value=getKey('github');
+  let ta={};try{ta=JSON.parse(localStorage.getItem(LS.ta)||'{}')}catch(e){}
+  taName.value=ta.name||'';taTitle.value=ta.title||'';taEmail.value=ta.email||'';taBooking.value=ta.booking||'';taPhoto.value=ta.photo||'';
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('show')}
+function saveSettings(){
+  if(kAnthropic.value.trim())localStorage.setItem(LS.anthropic,kAnthropic.value.trim());
+  if(kGithub.value.trim())localStorage.setItem(LS.github,kGithub.value.trim());
+  localStorage.setItem(LS.ta,JSON.stringify({name:taName.value,title:taTitle.value,email:taEmail.value,booking:taBooking.value,photo:taPhoto.value}));
+  closeSettings();toast('Saved','success');
+}
+
+/* ============ utils ============ */
+function esc(s){return (s==null?'':''+s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function emptyMsg(t,s){return `<div class="empty"><div class="big">🤔</div><div style="font-size:16px;font-weight:600;color:var(--text)">${esc(t)}</div><div style="margin-top:6px">${s}</div></div>`}
+
+loadData();
+</script>
+</body>
+</html>

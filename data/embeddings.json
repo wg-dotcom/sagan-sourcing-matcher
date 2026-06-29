@@ -1,0 +1,1 @@
+{"model": "all-MiniLM-L6-v2", "hf": "Xenova/all-MiniLM-L6-v2", "dim": 384, "count": 18203, "quant": "int8", "normalized": true, "pooling": "mean"}
