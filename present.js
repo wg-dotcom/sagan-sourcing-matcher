@@ -162,7 +162,7 @@ Return ONLY valid JSON (no markdown):
   const A=(s)=>anonymize(s,last);
   const enriched={
     first:firstNameOf(c.name),
-    country:c.country||'', applied:c.role||'', score:c.score, video:c.video||'',
+    country:c.country||'', applied:c.role||'', score:c.score, video:c.video||'', comp:(c.tcomp||'').trim(),
     summary:A(d.summary||c.text||''),
     why:(d.why||[]).map(A).filter(Boolean).slice(0,5),
     note:A(d.note||''), detailedNote:A(d.detailedNote||''),
@@ -225,6 +225,7 @@ function presCandidateCard(c,i){
           <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span>${i===0?'<span class="badge badge-shortlisted">Top pick</span>':''}</div>
         </div>
       </div>
+      ${c.comp?`<div class="card-rate"><div class="card-rate-amount" style="color:var(--highlight)">${pesc(c.comp)}</div><div class="card-rate-period">Expected · monthly</div></div>`:''}
     </div>
     <div class="card-body">
       ${c.experience.filter(e=>e.role).length?`<div class="card-section-title">Experience Highlights</div><div class="experience-list">${c.experience.filter(e=>e.role).slice(0,4).map((e,j,a)=>`<div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div>${j<a.length-1?'<div class="exp-line"></div>':''}</div><div class="exp-content"><div class="exp-role">${pesc(e.role)}</div><div class="exp-company">${pesc(e.company)}${e.dates?' · '+pesc(e.dates):''}</div></div></div>`).join('')}</div>`:''}
