@@ -11,7 +11,7 @@ const CLAUDE_MODEL_PRES='claude-sonnet-4-6';
 
 // Talent Advisor directory (same as rt-builder) — picked per presentation.
 const ADVISORS = {
-  jesus:{name:'Jesus Pacheco', role:'Sagan · Head of Revenue', photo:'', summary:'Jesus leads Revenue at Sagan and personally oversees this search. He is your direct point of contact for scheduling interviews and coordinating next steps.'},
+  jesus:{name:'Jesus Pacheco', role:'Sagan · Head of Revenue', photo:'https://saganrecruitment.com/wp-content/uploads/2025/10/Jesus-Pacheco.jpeg', summary:'Jesus leads Revenue at Sagan and personally oversees this search. He is your direct point of contact for scheduling interviews and coordinating next steps.'},
   priscilla:{name:'Priscilla Montenegro', role:'Sagan · Recruitment Team — Team Lead', photo:'https://saganrecruitment.com/wp-content/uploads/2025/08/Priscilla-.jpeg', summary:'Priscilla, Team Lead at Sagan, holds a Psychology degree and 5+ years of recruitment experience. She is your direct point of contact for this search.'},
   manuel:{name:'Manuel Jaramillo', role:'Sagan · Recruitment Team — Team Lead', photo:'https://saganrecruitment.com/wp-content/uploads/2025/08/Manuel.webp', summary:'Manuel, a Recruitment Team Lead, manages a talented team of tech, marketing, and creative recruiters. He is your direct point of contact for this search.'},
   andrea:{name:'Andrea Mendoza', role:'Sagan · Recruitment Team — Talent Advisor', photo:'https://saganrecruitment.com/wp-content/uploads/2025/08/Andrea-M-.jpeg', summary:'Andrea is a bilingual talent expert who combines her legal background with HR know-how. She is your direct point of contact for scheduling interviews and coordinating next steps.'},
@@ -33,6 +33,7 @@ function firstNameOf(n){return (n||'').trim().split(/\s+/)[0]||''}
 function lastTokens(n){return (n||'').trim().split(/\s+/).slice(1).filter(w=>w.length>1);}
 function fmtDate(d){try{return new Date(d+(d&&d.length<=10?'T12:00:00':'')).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}catch(e){return d||''}}
 function slugify(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'')}
+function formatComp(s){ if(!s) return ''; const m=(''+s).replace(/,/g,'').match(/(\d{2,7})(?:\.\d+)?/); if(!m) return (''+s).trim(); const n=parseInt(m[1],10); return n<100?(''+s).trim():'$'+n.toLocaleString('en-US'); }
 
 /* ---------- anonymization ---------- */
 function anonymize(text, lastNameTokens){
@@ -225,7 +226,7 @@ function presCandidateCard(c,i){
           <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span>${i===0?'<span class="badge badge-shortlisted">Top pick</span>':''}</div>
         </div>
       </div>
-      ${c.comp?`<div class="card-rate"><div class="card-rate-amount" style="color:var(--highlight)">${pesc(c.comp)}</div><div class="card-rate-period">Expected · monthly</div></div>`:''}
+      ${c.comp?`<div class="card-rate"><div class="card-rate-amount" style="color:var(--highlight)">${pesc(formatComp(c.comp))}</div><div class="card-rate-period">Expected · monthly</div></div>`:''}
     </div>
     <div class="card-body">
       ${c.experience.filter(e=>e.role).length?`<div class="card-section-title">Experience Highlights</div><div class="experience-list">${c.experience.filter(e=>e.role).slice(0,4).map((e,j,a)=>`<div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div>${j<a.length-1?'<div class="exp-line"></div>':''}</div><div class="exp-content"><div class="exp-role">${pesc(e.role)}</div><div class="exp-company">${pesc(e.company)}${e.dates?' · '+pesc(e.dates):''}</div></div></div>`).join('')}</div>`:''}
@@ -239,6 +240,21 @@ function presCandidateCard(c,i){
   </div></div>`;
 }
 
+function presComparison(cands){
+  if(!cands || cands.length<2) return '';
+  const rows=cands.map(c=>`<tr>
+    <td style="font-weight:600;color:var(--text-primary)">${pesc(c.first)}</td>
+    <td>${pesc(c.country||'—')}</td>
+    <td class="cmp-comp">${pesc(formatComp(c.comp)||'—')}</td>
+    <td>${pesc((c.skills||[]).slice(0,4).join(', ')||'—')}</td>
+    <td>${pesc(c.note || (c.detailedNote||'').split(/(?<=\.)\s/)[0] || '')}</td>
+  </tr>`).join('');
+  return `<div class="comparison-section fade-in">
+    <div class="cmp-title">At a glance</div>
+    <div class="comparison-table-wrap"><table class="comparison-table">
+      <thead><tr><th>Candidate</th><th>Location</th><th>Expected</th><th>Top skills</th><th>Headline</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+}
 function buildPresentationHTML(batches, o){
   const advisor=o.advisor||{};
   batches=(batches||[]).slice().sort((a,b)=>a.batch-b.batch);
@@ -285,6 +301,14 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
 .batch-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;background:var(--primary);color:#fff;font-size:11px;font-weight:700}
 .batch-btn.active .batch-count{background:var(--highlight);color:var(--dark)}
 .batch-panel.hidden{display:none}
+.comparison-section{max-width:1100px;margin:8px auto 0;padding:0 40px 8px}
+.cmp-title{font-family:var(--font-meta);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--primary);text-align:center;margin-bottom:16px}
+.comparison-table-wrap{overflow-x:auto;border-radius:14px;box-shadow:var(--shadow-md)}
+.comparison-table{width:100%;border-collapse:collapse;background:var(--bg-card);font-size:13px;color:var(--text-mid);min-width:600px}
+.comparison-table thead th{background:var(--dark);color:#fff;padding:13px 16px;text-align:left;font-family:var(--font-meta);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+.comparison-table tbody td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top}
+.comparison-table tbody tr:last-child td{border-bottom:none}.comparison-table tbody tr:hover{background:var(--bg-card-hover)}
+.comparison-table .cmp-comp{font-weight:700;color:var(--primary);white-space:nowrap}
 .candidate-card{max-width:1100px;margin:0 auto 32px;padding:0 40px}
 .card{background:var(--bg-card);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);transition:transform .3s,box-shadow .3s}
 .card:hover{transform:translateY(-2px);box-shadow:0 1px 3px rgba(0,0,0,.04),0 16px 48px rgba(0,0,0,.1)}.card.featured{box-shadow:var(--shadow-md),0 0 0 1px #a6771433}
@@ -344,7 +368,7 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
 <section class="candidates-section">
   <div class="candidates-header fade-in"><h2>Candidate Profiles</h2></div>
   ${batches.length>1?`<div class="batch-switcher fade-in">${batches.map(b=>`<button class="batch-btn${b.batch===active?' active':''}" data-b="${b.batch}" onclick="showBatch(${b.batch})">Batch ${b.batch}<span class="batch-count">${b.cands.length}</span></button>`).join('')}</div>`:''}
-  ${batches.map(b=>`<div class="batch-panel${b.batch===active?'':' hidden'}" id="batch-${b.batch}">${(b.cands||[]).map((c,i)=>presCandidateCard(c,i)).join('')}</div>`).join('')}
+  ${batches.map(b=>`<div class="batch-panel${b.batch===active?'':' hidden'}" id="batch-${b.batch}">${(b.cands||[]).map((c,i)=>presCandidateCard(c,i)).join('')}${presComparison(b.cands||[])}</div>`).join('')}
 </section>
 <script type="application/json" id="sm-batches">${dataJSON}</script>
 <div class="advisor-section fade-in"><div class="advisor-section-label">Your Talent Advisor</div>
