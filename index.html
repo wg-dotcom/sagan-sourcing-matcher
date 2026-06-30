@@ -227,7 +227,7 @@
 <div class="modal-bg" id="recipModal">
   <div class="modal">
     <h3>Email <span id="recipCount">0</span> candidate(s)</h3>
-    <p class="hint" style="margin-bottom:14px">Already copied to your clipboard in the Bulk Sender's exact <strong>First&nbsp;Name, Last&nbsp;Name, Email</strong> format. Steps:</p>
+    <p class="hint" style="margin-bottom:14px">Already copied to your clipboard in the Bulk Sender's exact <strong>Last&nbsp;Name, First&nbsp;Name, Email</strong> format. Steps:</p>
     <ol style="font-size:13px;color:var(--text);line-height:1.7;margin:0 0 14px 18px">
       <li>Click <strong>Open Bulk Sender</strong> below.</li>
       <li>Click inside its <strong>Paste Data</strong> box and press <strong>⌘V</strong> (Ctrl+V).</li>
@@ -478,12 +478,12 @@ async function emailSelected(){
   const picked=RESULTS.filter(r=>r._sel&&r.email);
   if(!picked.length){toast('Check "I want to contact them" on at least one candidate (with an email).','error');return;}
   // Format exactly as the Bulk Sender's "Paste Data" box expects: First, Last, Email (one per line)
-  const data=picked.map(r=>{const [f,l]=splitName(r.name);return [f,l,r.email].join(', ');}).join('\n');
+  const data=picked.map(r=>{const [f,l]=splitName(r.name);return [l,f,r.email].join(', ');}).join('\n');
   document.getElementById('recipData').value=data;
   document.getElementById('recipCount').textContent=picked.length;
   document.getElementById('recipModal').classList.add('show');
   const ok=await copyText(data);
-  toast(ok?`📋 Copied ${picked.length} recipient${picked.length>1?'s':''} in "First, Last, Email" format.`:'Select the text below and copy it (⌘C).', ok?'success':'load',7000);
+  toast(ok?`📋 Copied ${picked.length} recipient${picked.length>1?'s':''} in "Last, First, Email" format.`:'Select the text below and copy it (⌘C).', ok?'success':'load',7000);
 }
 function openOutreach(){window.open(OUTREACH_URL,'_blank');}
 async function recopyRecipients(){const ok=await copyText(document.getElementById('recipData').value);toast(ok?'Copied again.':'Copy failed — select manually.',ok?'success':'error');}
