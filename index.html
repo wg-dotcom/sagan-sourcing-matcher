@@ -169,7 +169,7 @@
     <div class="empty">
       <div class="big">🎯</div>
       <div style="font-size:16px;font-weight:600;color:var(--text)">Paste a JD and hit Find Candidates</div>
-      <div style="margin-top:6px">The matcher searches your sourcing base (video-ready candidates, last 6 months),<br/>then Claude ranks the best fits against this specific role.</div>
+      <div style="margin-top:6px">The matcher searches your sourcing base (video-ready candidates, last 12 months),<br/>then Claude ranks the best fits against this specific role.</div>
     </div>
   </div>
 </div>
@@ -276,7 +276,7 @@ async function loadData(){
     const buf=await (await fetch('data/embeddings.u8')).arrayBuffer();
     EMB=new Int8Array(buf);
     LOADED=true;
-    pill.textContent=CANDS.length.toLocaleString()+' candidates · last 6 mo';
+    pill.textContent=CANDS.length.toLocaleString()+' candidates · last 12 mo';
     buildCountryOpts(); renderSaved();
     toast('Pool loaded: '+CANDS.length.toLocaleString()+' video-ready candidates','success');
   }catch(e){pill.textContent='⚠ index not built';toast('Could not load candidate index. Run the pipeline first. ('+e.message+')','error',8000);}
