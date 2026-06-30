@@ -214,8 +214,9 @@
     <div class="fg"><label class="lbl">Intro / selection rationale (optional)</label><textarea id="pIntro" rows="3" placeholder="A short note to the member on why these candidates…"></textarea></div>
     <div style="display:flex;gap:10px;margin-top:6px">
       <button class="btn btn-ghost" style="flex:1" onclick="closePresent()">Cancel</button>
-      <button class="btn btn-accent" style="flex:1" onclick="genPresentation()">👁 Generate &amp; Preview</button>
+      <button class="btn btn-accent" id="genBtn" style="flex:1" onclick="genPresentation()">👁 Generate &amp; Preview</button>
     </div>
+    <div id="presProgress" class="hint" style="display:none;margin-top:10px"></div>
     <div id="publishRow" style="display:none;gap:10px;margin-top:10px">
       <button class="btn btn-ghost" style="flex:1" onclick="downloadPresentation()">⬇ Download HTML</button>
       <button class="btn btn-accent" id="publishBtn" style="flex:1.4;background:var(--green-deep)" onclick="publishPresentation()">🚀 Publish to GitHub Pages</button>
@@ -501,23 +502,32 @@ function createPresentation(){
   document.getElementById('presentModal').classList.add('show');
 }
 function closePresent(){document.getElementById('presentModal').classList.remove('show')}
-function genPresentation(){
+async function genPresentation(){
   const picked=RESULTS.filter(r=>r._sel);
   const member=document.getElementById('pMember').value.trim();
   const role=document.getElementById('pRole').value.trim();
   if(!member||!role){toast('Member/company and role are required.','error');return;}
+  if(!getKey('anthropic')){toast('Add your Anthropic key in Settings — fetching CVs + writing notes needs it.','error');return;}
   let adv={};try{adv=JSON.parse(localStorage.getItem(LS.ta)||'{}')}catch(e){}
-  if(!adv.name){toast('Tip: add your Talent Advisor profile in Settings so the page shows your card.','load',5000);}
   const o={member,role,batchNumber:parseInt(document.getElementById('pBatch').value)||1,
     batchDate:document.getElementById('pDate').value||new Date().toISOString().slice(0,10),
-    introNote:document.getElementById('pIntro').value.trim(),advisor:adv};
-  _presHTML=buildPresentationHTML(picked,o);
-  _presMeta={member,role,batch:o.batchNumber};
-  const w=window.open('','_blank');
-  if(w){w.document.open();w.document.write(_presHTML);w.document.close();}
-  else{toast('Allow pop-ups to see the preview.','error');}
-  document.getElementById('publishRow').style.display='flex';
-  toast('Preview opened in a new tab. Nothing is published yet — review, then Publish.','success',6000);
+    introNote:document.getElementById('pIntro').value.trim(), jd:document.getElementById('jd').value.trim(), advisor:adv};
+  const genBtn=document.getElementById('genBtn'); genBtn.disabled=true;
+  const prog=document.getElementById('presProgress'); prog.style.display='block';
+  prog.innerHTML='<span class="spinner dark"></span> Starting… (fetching CVs + writing AI notes per candidate, ~10-20s each)';
+  try{
+    const processed=await processAll(picked,o,(i,n,name)=>{prog.innerHTML=`<span class="spinner dark"></span> Profile ${i+1}/${n}: fetching CV + writing notes for <strong>${esc(name)}</strong>…`;});
+    const cvCount=processed.filter(p=>p.resumeFetched).length;
+    prog.innerHTML=`✅ Built ${processed.length} anonymized profiles (${cvCount} CV${cvCount===1?'':'s'} fetched). Opening preview…`;
+    _presHTML=buildPresentationHTML(processed,o);
+    _presMeta={member,role,batch:o.batchNumber};
+    const w=window.open('','_blank');
+    if(w){w.document.open();w.document.write(_presHTML);w.document.close();}
+    else{toast('Allow pop-ups to see the preview.','error');}
+    document.getElementById('publishRow').style.display='flex';
+    toast('Preview opened — first-names-only, CVs inline, notes in your voice. Nothing published yet.','success',7000);
+  }catch(e){prog.innerHTML='';toast('Generation failed: '+esc(e.message),'error',8000);}
+  genBtn.disabled=false;
 }
 function downloadPresentation(){
   if(!_presHTML){toast('Generate the page first.','error');return;}
