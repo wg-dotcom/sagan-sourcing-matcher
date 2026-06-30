@@ -188,12 +188,11 @@ function cvBlock(c){
   const langs=c.languages.filter(l=>l.name).length?`<div class="cv-sub">Languages</div><div class="cv-line">${c.languages.filter(l=>l.name).map(l=>pesc(l.name)+(l.level?' ('+pesc(l.level)+')':'')).join(' · ')}</div>`:'';
   const skills=c.skills.length?`<div class="cv-sub">Skills</div><div class="cv-tags">${c.skills.map(x=>'<span class="ctag ctag-key">'+pesc(x)+'</span>').join('')}</div>`:'';
   if(!exp&&!edu&&!certs&&!langs&&!skills) return '';
-  return `<details class="cv"><summary>📄 View anonymized CV</summary><div class="cv-body">
+  return `<details class="cv"><summary>📄 View CV</summary><div class="cv-body">
     ${c.summary?'<p class="cv-summary">'+pesc(c.summary)+'</p>':''}
     ${exp?'<div class="cv-sub">Experience</div>'+exp:''}
     ${edu?'<div class="cv-sub">Education</div>'+edu:''}
     ${skills}${certs}${langs}
-    <div class="cv-note">Identifying details (full name, contact, links) removed for screening.</div>
   </div></details>`;
 }
 function presCandidateCard(c,i){
@@ -210,8 +209,6 @@ function presCandidateCard(c,i){
       </div>
     </div>
     <div class="card-body">
-      ${c.note?`<div class="card-narrative"><strong>${pesc(c.note)}</strong></div>`:''}
-      ${c.why.length?`<div class="card-section-title">Why ${pesc(c.first)}</div><ul class="strength-list">${c.why.map(x=>'<li>'+pesc(x)+'</li>').join('')}</ul>`:''}
       ${c.experience.filter(e=>e.role).length?`<div class="card-section-title">Experience Highlights</div><div class="experience-list">${c.experience.filter(e=>e.role).slice(0,4).map((e,j,a)=>`<div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div>${j<a.length-1?'<div class="exp-line"></div>':''}</div><div class="exp-content"><div class="exp-role">${pesc(e.role)}</div><div class="exp-company">${pesc(e.company)}${e.dates?' · '+pesc(e.dates):''}</div></div></div>`).join('')}</div>`:''}
       ${c.skills.length?`<div class="card-section-title">Platforms &amp; Tools</div><div class="tags-cluster">${c.skills.slice(0,5).map(s=>'<span class="ctag ctag-key">'+pesc(s)+'</span>').join('')}${c.skills.slice(5).map(s=>'<span class="ctag">'+pesc(s)+'</span>').join('')}</div>`:''}
       ${c.fitIndicators.length?`<div class="card-section-title">Fit Indicators</div><div class="fit-grid">${c.fitIndicators.map(s=>'<div class="fit-item"><div class="fit-label">'+pesc(s)+'</div></div>').join('')}</div>`:''}
@@ -223,10 +220,13 @@ function presCandidateCard(c,i){
   </div></div>`;
 }
 
-function buildPresentationHTML(cands, o){
+function buildPresentationHTML(batches, o){
   const advisor=o.advisor||{};
-  const batch=o.batchNumber||1;
-  const dateF=fmtDate(o.batchDate||new Date().toISOString().slice(0,10));
+  batches=(batches||[]).slice().sort((a,b)=>a.batch-b.batch);
+  const active=batches.length?batches[batches.length-1].batch:1;
+  const total=batches.reduce((s,b)=>s+(b.cands?b.cands.length:0),0);
+  const dateF=fmtDate((batches[batches.length-1]||{}).date||new Date().toISOString().slice(0,10));
+  const dataJSON=JSON.stringify({member:o.member,role:o.role,advisor,batches}).replace(/</g,'\\u003c');
   return `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -259,6 +259,13 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
 .editorial-text{font-size:17px;line-height:1.85;color:var(--text-mid)}.editorial-text p{margin-bottom:16px}.editorial-divider{width:48px;height:3px;background:var(--primary);border-radius:2px;margin-top:32px}
 .candidates-section{background:var(--bg-light);padding:72px 0;margin-top:72px}
 .candidates-header{text-align:center;padding:0 24px 40px}.candidates-header h2{font-family:var(--font-heading);font-size:32px;font-weight:700;margin-bottom:8px}.candidates-header p{font-family:var(--font-meta);font-size:14px;color:var(--text-light)}
+.batch-switcher{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 auto 36px;padding:0 24px}
+.batch-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:1.5px solid var(--border-strong);border-radius:10px;background:var(--bg-card);font-family:var(--font-meta);font-size:12px;font-weight:600;color:var(--text-light);cursor:pointer;transition:.18s}
+.batch-btn:hover{border-color:var(--primary);color:var(--text-primary)}
+.batch-btn.active{background:var(--dark);border-color:var(--dark);color:#fff}
+.batch-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;background:var(--primary);color:#fff;font-size:11px;font-weight:700}
+.batch-btn.active .batch-count{background:var(--highlight);color:var(--dark)}
+.batch-panel.hidden{display:none}
 .candidate-card{max-width:1100px;margin:0 auto 32px;padding:0 40px}
 .card{background:var(--bg-card);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);transition:transform .3s,box-shadow .3s}
 .card:hover{transform:translateY(-2px);box-shadow:0 1px 3px rgba(0,0,0,.04),0 16px 48px rgba(0,0,0,.1)}.card.featured{box-shadow:var(--shadow-md),0 0 0 1px #a6771433}
@@ -308,18 +315,19 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
   <div class="hero-brand"><img class="logo-img" src="${SAGAN_LOGO}" alt="Sagan"/><div class="logo-sep"></div><span class="logo-sub">Talent Selection</span></div>
   <div class="hero-eyebrow">Sagan Talent Search</div>
   <h1><strong>${pesc(o.role)}</strong> Candidates for ${pesc(o.member)}</h1>
-  <p class="hero-sub">Curated, anonymized talent matched to your specific needs. Identities are revealed at interview stage.</p>
+  <p class="hero-sub">Curated talent matched to your specific needs for this role.</p>
   <div class="hero-meta">
-    <div class="hero-meta-item"><span class="hero-meta-label">Candidates</span><span class="hero-meta-value">${cands.length} profiles</span></div>
-    <div class="hero-meta-item"><span class="hero-meta-label">Batch</span><span class="hero-meta-value">${batch} · ${dateF}</span></div>
+    <div class="hero-meta-item"><span class="hero-meta-label">Candidates</span><span class="hero-meta-value">${total} profiles</span></div>
+    <div class="hero-meta-item"><span class="hero-meta-label">${batches.length>1?'Batches':'Batch'}</span><span class="hero-meta-value">${batches.length>1?batches.length+' · latest '+dateF:'Batch '+active+' · '+dateF}</span></div>
     <div class="hero-meta-item"><span class="hero-meta-label">Advisor</span><span class="hero-meta-value">${pesc(advisor.name||'Sagan')}</span></div>
   </div>
 </div></section>
-${o.introNote&&o.introNote.trim()?`<section class="editorial fade-in"><div class="editorial-label">Our Selection Rationale</div><div class="editorial-text"><p>${pesc(o.introNote).replace(/\n+/g,'</p><p>')}</p></div><div class="editorial-divider"></div></section>`:''}
 <section class="candidates-section">
-  <div class="candidates-header fade-in"><h2>Candidate Profiles · Batch ${batch}</h2><p>Anonymized for screening. First names only.</p></div>
-  ${cands.map((c,i)=>presCandidateCard(c,i)).join('')}
+  <div class="candidates-header fade-in"><h2>Candidate Profiles</h2></div>
+  ${batches.length>1?`<div class="batch-switcher fade-in">${batches.map(b=>`<button class="batch-btn${b.batch===active?' active':''}" data-b="${b.batch}" onclick="showBatch(${b.batch})">Batch ${b.batch}<span class="batch-count">${b.cands.length}</span></button>`).join('')}</div>`:''}
+  ${batches.map(b=>`<div class="batch-panel${b.batch===active?'':' hidden'}" id="batch-${b.batch}">${(b.cands||[]).map((c,i)=>presCandidateCard(c,i)).join('')}</div>`).join('')}
 </section>
+<script type="application/json" id="sm-batches">${dataJSON}</script>
 <div class="advisor-section fade-in"><div class="advisor-section-label">Your Talent Advisor</div>
   <div class="advisor-card">
     ${advisor.photo?`<img class="advisor-avatar" src="${pesc(advisor.photo)}" alt="${pesc(advisor.name)}"/>`:`<div class="advisor-avatar" style="display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:700;font-size:26px;color:var(--primary)">${pesc(initials(advisor.name))}</div>`}
@@ -338,26 +346,40 @@ ${o.introNote&&o.introNote.trim()?`<section class="editorial fade-in"><div class
 <section class="footer-cta"><h2>Ready to <strong>move forward</strong>?</h2><p>Tell us which candidates you'd like to interview and we'll coordinate next steps.</p>
   ${advisor.email?`<a class="footer-contact" href="mailto:${pesc(advisor.email)}?subject=${encodeURIComponent('Re: '+o.role+' candidates')}">Contact ${pesc((advisor.name||'Sagan').split(' ')[0])}</a>`:''}</section>
 <footer class="site-footer"><div><img src="${SAGAN_LOGO}" alt="Sagan"/></div><div style="margin-top:10px">Redefining Recruitment · <a href="https://getsagan.com" style="color:var(--primary)">getsagan.com</a></div></footer>
-<script>const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.1});document.querySelectorAll('.fade-in').forEach(el=>io.observe(el));</script>
+<script>
+function showBatch(n){document.querySelectorAll('.batch-panel').forEach(p=>p.classList.toggle('hidden',p.id!=='batch-'+n));document.querySelectorAll('.batch-btn').forEach(b=>b.classList.toggle('active',b.dataset.b===String(n)));const s=document.querySelector('.candidates-section');if(s)window.scrollTo({top:s.offsetTop-16,behavior:'smooth'});}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.1});document.querySelectorAll('.fade-in').forEach(el=>io.observe(el));
+</script>
 </body></html>`;
 }
 
 /* ---------- GitHub publish (explicit, confirmed) ---------- */
-async function ghPublish(html, member, role, batch, onStatus){
+// Publish/merge: one page per member+role. A new batch becomes a new TAB on the
+// existing page (prior batches preserved), instead of a separate page.
+async function ghPublishBatch(o, batch, onStatus){
   const token=getKey('github'); if(!token) throw new Error('Missing GitHub PAT (Settings)');
-  let repo=slugify(member+'-'+role)+'-candidates'; if(batch>1) repo+='-b'+batch;
+  const repo=slugify(o.member+'-'+o.role)+'-candidates';
   const headers={'Authorization':'token '+token,'Accept':'application/vnd.github+json'};
-  onStatus&&onStatus('Checking repo '+repo+'…');
-  let exists=false; try{const c=await fetch(`https://api.github.com/repos/${GH_ORG}/${repo}`,{headers});exists=c.ok;}catch(e){}
-  if(!exists){ onStatus&&onStatus('Creating repo '+repo+'…');
-    const cr=await fetch(`https://api.github.com/user/repos`,{method:'POST',headers,body:JSON.stringify({name:repo,private:false,description:`${role} candidates for ${member} — Sagan`})});
+  onStatus&&onStatus('Checking '+repo+'…');
+  let sha=null, prior=[];
+  try{
+    const g=await fetch(`https://api.github.com/repos/${GH_ORG}/${repo}/contents/index.html`,{headers});
+    if(g.ok){ const j=await g.json(); sha=j.sha;
+      const html=decodeURIComponent(escape(atob((j.content||'').replace(/\n/g,''))));
+      const m=html.match(/<script type="application\/json" id="sm-batches">([\s\S]*?)<\/script>/);
+      if(m){ try{ prior=(JSON.parse(m[1].replace(/\\u003c/g,'<')).batches)||[]; }catch(e){} }
+    }
+  }catch(e){}
+  if(!sha){ onStatus&&onStatus('Creating page '+repo+'…');
+    const cr=await fetch(`https://api.github.com/user/repos`,{method:'POST',headers,body:JSON.stringify({name:repo,private:false,description:`${o.role} candidates for ${o.member} — Sagan`})});
     if(!cr.ok && cr.status!==422) throw new Error('Create repo: '+(await cr.text()).slice(0,160)); }
-  let sha=null; try{const g=await fetch(`https://api.github.com/repos/${GH_ORG}/${repo}/contents/index.html`,{headers});if(g.ok)sha=(await g.json()).sha;}catch(e){}
-  onStatus&&onStatus('Uploading page…');
+  const merged=prior.filter(b=>b.batch!==batch.batch).concat([batch]).sort((a,b)=>a.batch-b.batch);
+  const html=buildPresentationHTML(merged, o);
+  onStatus&&onStatus(`Publishing (${merged.length} batch${merged.length>1?'es':''} as tabs)…`);
   const content=btoa(unescape(encodeURIComponent(html)));
-  const put=await fetch(`https://api.github.com/repos/${GH_ORG}/${repo}/contents/index.html`,{method:'PUT',headers,body:JSON.stringify({message:'Publish presentation',content,...(sha?{sha}:{})})});
+  const put=await fetch(`https://api.github.com/repos/${GH_ORG}/${repo}/contents/index.html`,{method:'PUT',headers,body:JSON.stringify({message:'Publish batch '+batch.batch,content,...(sha?{sha}:{})})});
   if(!put.ok) throw new Error('Upload: '+(await put.text()).slice(0,160));
   onStatus&&onStatus('Enabling GitHub Pages…');
   try{await fetch(`https://api.github.com/repos/${GH_ORG}/${repo}/pages`,{method:'POST',headers,body:JSON.stringify({source:{branch:'main',path:'/'}})});}catch(e){}
-  return `https://${GH_ORG}.github.io/${repo}/`;
+  return { url:`https://${GH_ORG}.github.io/${repo}/`, batches:merged.length, existed:!!sha };
 }

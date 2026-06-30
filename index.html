@@ -217,7 +217,7 @@
       <div class="fg"><label class="lbl">Batch #</label><input id="pBatch" type="number" value="1" min="1"/><div class="hint">Batch 2+ publishes to a new <code>-b#</code> repo.</div></div>
       <div class="fg"><label class="lbl">Date</label><input id="pDate" type="date"/></div>
     </div>
-    <div class="fg"><label class="lbl">Intro / selection rationale (optional)</label><textarea id="pIntro" rows="3" placeholder="A short note to the member on why these candidates…"></textarea></div>
+    <div class="fg"><label class="lbl">Role context for the AI notes (optional)</label><textarea id="pIntro" rows="3" placeholder="Pain points / must-haves to sharpen the write-ups. Not shown on the page."></textarea></div>
     <div style="display:flex;gap:10px;margin-top:6px">
       <button class="btn btn-ghost" style="flex:1" onclick="closePresent()">Cancel</button>
       <button class="btn btn-accent" id="genBtn" style="flex:1" onclick="genPresentation()">👁 Generate &amp; Preview</button>
@@ -504,7 +504,7 @@ function openOutreach(){window.open(OUTREACH_URL,'_blank');}
 async function recopyRecipients(){const ok=await copyText(document.getElementById('recipData').value);toast(ok?'Copied again.':'Copy failed — select manually.',ok?'success':'error');}
 
 /* ============ presentation: build → preview → publish (explicit) ============ */
-let _presHTML=null, _presMeta=null;
+let _presHTML=null, _presMeta=null, _o=null, _batch=null;
 function createPresentation(){
   const picked=RESULTS.filter(r=>r._sel);
   if(!picked.length){toast('Select the candidates you want to present first (check "I want to contact them" or use Select all).','error');return;}
@@ -531,8 +531,9 @@ async function genPresentation(){
   prog.innerHTML='<span class="spinner dark"></span> Writing AI notes per candidate…';
   try{
     const processed=await processAll(picked,o,(i,n,name)=>{prog.innerHTML=`<span class="spinner dark"></span> ${i}/${n} — writing notes for <strong>${esc(name)}</strong>…`;});
-    _presHTML=buildPresentationHTML(processed,o);
-    _presMeta={member,role,batch:o.batchNumber};
+    _batch={batch:o.batchNumber, date:o.batchDate, cands:processed};
+    _o=o; _presMeta={member,role,batch:o.batchNumber};
+    _presHTML=buildPresentationHTML([_batch],o);
     // render preview IN-PAGE (iframe) — no pop-up, never blocked
     document.getElementById('presFrame').srcdoc=_presHTML;
     document.getElementById('presPreview').classList.add('show');
@@ -552,12 +553,13 @@ async function publishPresentation(){
   if(!_presHTML){toast('Generate the page first.','error');return;}
   if(!getKey('github')){toast('Add your GitHub PAT in Settings to publish.','error');return;}
   const {member,role,batch}=_presMeta;
-  if(!confirm(`Publish a PUBLIC presentation page to GitHub Pages?\n\nMember: ${member}\nRole: ${role}\nBatch: ${batch}\n\nThis creates/updates a public repo under "wg-dotcom". Nothing in Airtable is touched.`)) return;
+  if(!confirm(`Publish to GitHub Pages?\n\nMember: ${member}\nRole: ${role}\nBatch: ${batch}\n\nIf a page already exists for this member + role, Batch ${batch} is added as a new TAB (existing batches kept). Nothing in Airtable is touched.`)) return;
   const btn=document.getElementById('publishBtn');btn.disabled=true;const orig=btn.textContent;btn.textContent='Publishing…';
   try{
-    const url=await ghPublish(_presHTML,member,role,batch,(s)=>toast(s,'load',0));
-    toast('✅ Published: <a href="'+url+'" target="_blank" style="color:var(--accent);font-weight:600">'+url+'</a> (copied)','success',0);
-    try{await navigator.clipboard.writeText(url);}catch(e){}
+    const res=await ghPublishBatch(_o,_batch,(s)=>toast(s,'load',0));
+    const msg=res.existed?('Added Batch '+_batch.batch+' as a tab — '+res.batches+' batch'+(res.batches>1?'es':'')+' on the page'):('Published Batch '+_batch.batch);
+    toast('✅ '+msg+': <a href="'+res.url+'" target="_blank" style="color:var(--accent);font-weight:600">'+res.url+'</a> (copied)','success',0);
+    try{await navigator.clipboard.writeText(res.url);}catch(e){}
   }catch(e){toast('Publish failed: '+esc(e.message),'error',9000);}
   btn.disabled=false;btn.textContent=orig;
 }
