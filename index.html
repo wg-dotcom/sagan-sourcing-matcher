@@ -181,6 +181,7 @@
     <p class="hint" style="margin-bottom:16px">Keys are stored only in this browser (localStorage). They are sent only directly to Anthropic/GitHub. Matching uses an on-device model — no embedding key needed.</p>
     <div class="fg"><label class="lbl">Anthropic API key (matching)</label><input id="kAnthropic" type="password" placeholder="sk-ant-…"/></div>
     <div class="fg"><label class="lbl">GitHub PAT (publish pages)</label><input id="kGithub" type="password" placeholder="ghp_…"/></div>
+    <div class="fg"><label class="lbl">CV proxy URL (optional — for fetching resumes)</label><input id="kCvproxy" placeholder="https://your-worker.workers.dev/?url="/><div class="hint">Makes CV fetching reliable. Put <code>{url}</code> where the encoded link goes, or end with <code>?url=</code>. Without it, the tool tries public proxies (often blocked).</div></div>
     <div class="section-title">Your Talent Advisor profile</div>
     <div class="row2">
       <div class="fg"><label class="lbl">Name</label><input id="taName" placeholder="Jesus Pacheco"/></div>
@@ -585,6 +586,7 @@ function importSearches(file){if(!file)return;const r=new FileReader();r.onload=
 function openSettings(){
   document.getElementById('kAnthropic').value=getKey('anthropic');
   document.getElementById('kGithub').value=getKey('github');
+  document.getElementById('kCvproxy').value=(localStorage.getItem('sm_cvproxy')||'');
   let ta={};try{ta=JSON.parse(localStorage.getItem(LS.ta)||'{}')}catch(e){}
   taName.value=ta.name||'';taTitle.value=ta.title||'';taEmail.value=ta.email||'';taBooking.value=ta.booking||'';taPhoto.value=ta.photo||'';
   document.getElementById('settingsModal').classList.add('show');
@@ -593,6 +595,7 @@ function closeSettings(){document.getElementById('settingsModal').classList.remo
 function saveSettings(){
   if(kAnthropic.value.trim())localStorage.setItem(LS.anthropic,kAnthropic.value.trim());
   if(kGithub.value.trim())localStorage.setItem(LS.github,kGithub.value.trim());
+  localStorage.setItem('sm_cvproxy',document.getElementById('kCvproxy').value.trim());
   localStorage.setItem(LS.ta,JSON.stringify({name:taName.value,title:taTitle.value,email:taEmail.value,booking:taBooking.value,photo:taPhoto.value}));
   closeSettings();toast('Saved','success');
 }

@@ -47,28 +47,38 @@ function driveDirect(url){
   let m=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||url.match(/[?&]id=([\w-]+)/);
   return m?`https://drive.google.com/uc?export=download&id=${m[1]}`:url;
 }
+function cvProxy(){ try{return (localStorage.getItem('sm_cvproxy')||'').trim()}catch(e){return ''} }
+async function fetchBytes(purl, isJson){
+  const r=await fetch(purl,{signal:AbortSignal.timeout(7000)});
+  if(!r.ok) throw new Error('bad');
+  if(isJson){ const d=await r.json(); const c=d.contents||'';
+    if(c.startsWith('data:')){ const b=atob((c.split(',')[1]||'')); const u=new Uint8Array(b.length); for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i); return u; }
+    return new TextEncoder().encode(c); }
+  return new Uint8Array(await r.arrayBuffer());
+}
 async function fetchResumeText(url){
   if(!url) return null;
-  const target=driveDirect(url.trim());
-  const proxies=[`https://corsproxy.io/?url=${encodeURIComponent(target)}`,`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(target)}`];
-  for(const p of proxies){
-    try{
-      const r=await fetch(p,{signal:AbortSignal.timeout(12000)}); if(!r.ok) continue;
-      const buf=await r.arrayBuffer(); const bytes=new Uint8Array(buf);
-      const head=String.fromCharCode(...bytes.slice(0,5));
-      if(head.startsWith('%PDF')){
-        const lib=await pdfjs(); if(!lib) continue;
-        const pdf=await lib.getDocument({data:bytes}).promise; let txt='';
-        for(let i=1;i<=Math.min(pdf.numPages,8);i++){ const pg=await pdf.getPage(i); const c=await pg.getTextContent(); txt+=c.items.map(x=>x.str).join(' ')+'\n'; }
-        if(txt.trim().length>80) return txt.slice(0,9000);
-      } else {
-        let s=new TextDecoder('utf-8').decode(bytes);
-        if(/<html|<body|<!doctype/i.test(s)){ const d=new DOMParser().parseFromString(s,'text/html'); s=d.body?d.body.innerText:s; }
-        if(s.trim().length>80) return s.slice(0,9000);
-      }
-    }catch(e){ /* try next */ }
+  const target=driveDirect(url.trim()), enc=encodeURIComponent(target);
+  const tries=[];
+  const up=cvProxy();                       // user-controlled proxy (most reliable) — supports {url} placeholder
+  if(up) tries.push(fetchBytes(up.includes('{url}')?up.replace('{url}',enc):up+enc, false));
+  tries.push(fetchBytes('https://api.allorigins.win/raw?url='+enc, false));
+  tries.push(fetchBytes('https://corsproxy.io/?url='+enc, false));
+  tries.push(fetchBytes('https://api.codetabs.com/v1/proxy/?quest='+target, false));
+  tries.push(fetchBytes('https://api.allorigins.win/get?url='+enc, true));
+  let bytes=null; try{ bytes=await Promise.any(tries); }catch(e){ return null; }   // ~7s max, all in parallel
+  if(!bytes||bytes.length<5) return null;
+  const head=String.fromCharCode.apply(null, bytes.slice(0,5));
+  if(head.startsWith('%PDF')){
+    const lib=await pdfjs(); if(!lib) return null;
+    try{ const pdf=await lib.getDocument({data:bytes}).promise; let txt='';
+      for(let i=1;i<=Math.min(pdf.numPages,8);i++){ const pg=await pdf.getPage(i); const ct=await pg.getTextContent(); txt+=ct.items.map(x=>x.str).join(' ')+'\n'; }
+      return txt.trim().length>80?txt.slice(0,9000):null;
+    }catch(e){ return null; }
   }
-  return null;
+  let s=new TextDecoder('utf-8').decode(bytes);
+  if(/<html|<body|<!doctype/i.test(s)){ const d=new DOMParser().parseFromString(s,'text/html'); s=d.body?d.body.innerText:s; }
+  return s.trim().length>80?s.slice(0,9000):null;
 }
 
 /* ---------- Claude call ---------- */
@@ -91,9 +101,8 @@ function parseJSON(txt){
 }
 
 /* ---------- per-candidate processing ---------- */
-async function processCandidate(c, opts){
+async function processCandidate(c, opts, resumeText){
   const last=lastTokens(c.name);
-  const resumeText=await fetchResumeText(c.resume).catch(()=>null);
   const ctx=`MEMBER (company): ${opts.member} | ROLE: ${opts.role}
 ROLE CONTEXT / PAIN POINTS: ${opts.introNote||'(use the JD below)'}
 JOB DESCRIPTION:
@@ -151,12 +160,16 @@ Return ONLY valid JSON (no markdown):
   return enriched;
 }
 async function processAll(cands, opts, onProgress){
-  const out=[];
-  for(let i=0;i<cands.length;i++){
-    onProgress&&onProgress(i,cands.length,firstNameOf(cands[i].name));
-    out.push(await processCandidate(cands[i],opts));
-    if(i<cands.length-1) await new Promise(r=>setTimeout(r,800)); // gentle pacing
+  // Phase 1: fetch every CV in parallel (each races proxies, ~7s cap) — no per-candidate stalls
+  onProgress&&onProgress(0,cands.length,'fetching CVs in parallel');
+  const texts=await Promise.all(cands.map(c=>fetchResumeText(c.resume).catch(()=>null)));
+  // Phase 2: AI notes, 3 concurrent
+  const out=new Array(cands.length); let next=0, done=0;
+  async function worker(){
+    while(next<cands.length){ const i=next++; out[i]=await processCandidate(cands[i],opts,texts[i]);
+      done++; onProgress&&onProgress(done,cands.length,firstNameOf(cands[i].name)); }
   }
+  await Promise.all([worker(),worker(),worker()]);
   return out;
 }
 
