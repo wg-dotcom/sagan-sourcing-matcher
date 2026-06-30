@@ -105,6 +105,11 @@
   .ms-opt{display:flex;align-items:center;gap:7px;padding:3px 5px;font-size:12.5px;border-radius:6px;cursor:pointer}
   .ms-opt:hover{background:#fff}
   .ms-opt input{width:14px;height:14px;accent-color:var(--accent)}
+  .preview-overlay{position:fixed;inset:0;background:#fff;z-index:300;display:none;flex-direction:column}
+  .preview-overlay.show{display:flex}
+  .preview-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--bg-card);border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .preview-bar .pv-title{font-weight:600;font-size:13px;color:var(--text-dim)}
+  #presFrame{flex:1;border:none;width:100%}
   @media(max-width:880px){.wrap{grid-template-columns:1fr}.panel{position:relative;max-height:none;border-right:none;border-bottom:1px solid var(--border)}}
 </style>
 </head>
@@ -218,11 +223,19 @@
       <button class="btn btn-accent" id="genBtn" style="flex:1" onclick="genPresentation()">👁 Generate &amp; Preview</button>
     </div>
     <div id="presProgress" class="hint" style="display:none;margin-top:10px"></div>
-    <div id="publishRow" style="display:none;gap:10px;margin-top:10px">
-      <button class="btn btn-ghost" style="flex:1" onclick="downloadPresentation()">⬇ Download HTML</button>
-      <button class="btn btn-accent" id="publishBtn" style="flex:1.4;background:var(--green-deep)" onclick="publishPresentation()">🚀 Publish to GitHub Pages</button>
-    </div>
   </div>
+</div>
+
+<!-- IN-PAGE PRESENTATION PREVIEW (no pop-up) -->
+<div class="preview-overlay" id="presPreview">
+  <div class="preview-bar">
+    <span class="pv-title">👁 Preview — nothing published yet</span>
+    <div style="flex:1"></div>
+    <button class="btn btn-ghost btn-sm" onclick="downloadPresentation()">⬇ Download HTML</button>
+    <button class="btn btn-accent btn-sm" id="publishBtn" style="width:auto;background:var(--green-deep)" onclick="publishPresentation()">🚀 Publish to GitHub Pages</button>
+    <button class="btn btn-ghost btn-sm" onclick="closePreview()">✕ Close</button>
+  </div>
+  <iframe id="presFrame" title="Presentation preview"></iframe>
 </div>
 
 <!-- RECIPIENTS MODAL -->
@@ -503,6 +516,7 @@ function createPresentation(){
   document.getElementById('presentModal').classList.add('show');
 }
 function closePresent(){document.getElementById('presentModal').classList.remove('show')}
+function closePreview(){document.getElementById('presPreview').classList.remove('show')}
 async function genPresentation(){
   const picked=RESULTS.filter(r=>r._sel);
   const member=document.getElementById('pMember').value.trim();
@@ -515,18 +529,18 @@ async function genPresentation(){
     introNote:document.getElementById('pIntro').value.trim(), jd:document.getElementById('jd').value.trim(), advisor:adv};
   const genBtn=document.getElementById('genBtn'); genBtn.disabled=true;
   const prog=document.getElementById('presProgress'); prog.style.display='block';
-  prog.innerHTML='<span class="spinner dark"></span> Starting… (fetching CVs + writing AI notes per candidate, ~10-20s each)';
+  prog.innerHTML='<span class="spinner dark"></span> Writing AI notes per candidate…';
   try{
-    const processed=await processAll(picked,o,(i,n,name)=>{prog.innerHTML=`<span class="spinner dark"></span> Profile ${i+1}/${n}: fetching CV + writing notes for <strong>${esc(name)}</strong>…`;});
-    const cvCount=processed.filter(p=>p.resumeFetched).length;
-    prog.innerHTML=`✅ Built ${processed.length} anonymized profiles (${cvCount} CV${cvCount===1?'':'s'} fetched). Opening preview…`;
+    const processed=await processAll(picked,o,(i,n,name)=>{prog.innerHTML=`<span class="spinner dark"></span> ${i}/${n} — writing notes for <strong>${esc(name)}</strong>…`;});
     _presHTML=buildPresentationHTML(processed,o);
     _presMeta={member,role,batch:o.batchNumber};
-    const w=window.open('','_blank');
-    if(w){w.document.open();w.document.write(_presHTML);w.document.close();}
-    else{toast('Allow pop-ups to see the preview.','error');}
-    document.getElementById('publishRow').style.display='flex';
-    toast('Preview opened — first-names-only, CVs inline, notes in your voice. Nothing published yet.','success',7000);
+    // render preview IN-PAGE (iframe) — no pop-up, never blocked
+    document.getElementById('presFrame').srcdoc=_presHTML;
+    document.getElementById('presPreview').classList.add('show');
+    prog.innerHTML=''; prog.style.display='none';
+    closePresent();
+    const cvCount=processed.filter(p=>p.resumeFetched).length;
+    toast(`Preview ready (${cvCount}/${processed.length} CVs fetched). Anonymized, in your voice. Nothing published yet.`,'success',7000);
   }catch(e){prog.innerHTML='';toast('Generation failed: '+esc(e.message),'error',8000);}
   genBtn.disabled=false;
 }

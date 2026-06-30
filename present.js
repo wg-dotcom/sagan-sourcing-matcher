@@ -160,16 +160,19 @@ Return ONLY valid JSON (no markdown):
   return enriched;
 }
 async function processAll(cands, opts, onProgress){
-  // Phase 1: fetch every CV in parallel (each races proxies, ~7s cap) — no per-candidate stalls
-  onProgress&&onProgress(0,cands.length,'fetching CVs in parallel');
-  const texts=await Promise.all(cands.map(c=>fetchResumeText(c.resume).catch(()=>null)));
-  // Phase 2: AI notes, 3 concurrent
+  // Phase 1: fetch CVs only if a CV proxy is configured (public proxies are blocked,
+  // so without a proxy we skip the wait entirely and go straight to notes).
+  let texts;
+  if(cvProxy()){ onProgress&&onProgress(0,cands.length,'fetching CVs'); texts=await Promise.all(cands.map(c=>fetchResumeText(c.resume).catch(()=>null))); }
+  else { texts=cands.map(()=>null); }
+  // Phase 2: AI notes, up to 5 concurrent
   const out=new Array(cands.length); let next=0, done=0;
+  const W=Math.min(5,cands.length||1);
   async function worker(){
     while(next<cands.length){ const i=next++; out[i]=await processCandidate(cands[i],opts,texts[i]);
       done++; onProgress&&onProgress(done,cands.length,firstNameOf(cands[i].name)); }
   }
-  await Promise.all([worker(),worker(),worker()]);
+  await Promise.all(Array.from({length:W},()=>worker()));
   return out;
 }
 
