@@ -223,6 +223,27 @@
   </div>
 </div>
 
+<!-- RECIPIENTS MODAL -->
+<div class="modal-bg" id="recipModal">
+  <div class="modal">
+    <h3>Email <span id="recipCount">0</span> candidate(s)</h3>
+    <p class="hint" style="margin-bottom:14px">Already copied to your clipboard in the Bulk Sender's exact <strong>First&nbsp;Name, Last&nbsp;Name, Email</strong> format. Steps:</p>
+    <ol style="font-size:13px;color:var(--text);line-height:1.7;margin:0 0 14px 18px">
+      <li>Click <strong>Open Bulk Sender</strong> below.</li>
+      <li>Click inside its <strong>Paste Data</strong> box and press <strong>⌘V</strong> (Ctrl+V).</li>
+      <li>Click <strong>Parse Data</strong>.</li>
+    </ol>
+    <label class="lbl">Recipients (auto-copied — or select &amp; copy manually)</label>
+    <textarea id="recipData" rows="6" readonly onclick="this.select()" style="font-family:ui-monospace,monospace;font-size:12px"></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('recipModal').classList.remove('show')">Close</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="recopyRecipients()">📋 Copy again</button>
+      <button class="btn btn-accent" style="flex:1.3" onclick="openOutreach()">✉ Open Bulk Sender</button>
+    </div>
+    <p class="hint" style="margin-top:10px">A page on this site can't type into the sender directly (different website), so paste is one keystroke. The format is built to match exactly.</p>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="keys.local.js" onerror="void 0"></script>
@@ -443,15 +464,29 @@ function updateSelCount(){const p=document.querySelector('.res-head .pill');if(p
 function toggleAll(){const all=RESULTS.every(r=>r._sel);RESULTS.forEach(r=>r._sel=!all);renderResults();}
 
 /* ============ email selected ============ */
-function emailSelected(){
+function splitName(full){
+  const parts=(full||'').trim().replace(/,/g,' ').split(/\s+/).filter(Boolean);
+  if(!parts.length) return ['',''];
+  if(parts.length===1) return [parts[0],''];
+  return [parts[0], parts.slice(1).join(' ')];
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }
+  catch(e){ try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok;}catch(e2){return false;} }
+}
+async function emailSelected(){
   const picked=RESULTS.filter(r=>r._sel&&r.email);
   if(!picked.length){toast('Check "I want to contact them" on at least one candidate (with an email).','error');return;}
-  const emails=picked.map(r=>r.email).join(', ');
-  navigator.clipboard.writeText(emails).then(()=>{
-    toast(`📋 Copied ${picked.length} email${picked.length>1?'s':''}. Opening Outreach — paste into the recipients field.`,'success',6000);
-    window.open(OUTREACH_URL,'_blank');
-  },()=>{prompt('Copy these emails:',emails);});
+  // Format exactly as the Bulk Sender's "Paste Data" box expects: First, Last, Email (one per line)
+  const data=picked.map(r=>{const [f,l]=splitName(r.name);return [f,l,r.email].join(', ');}).join('\n');
+  document.getElementById('recipData').value=data;
+  document.getElementById('recipCount').textContent=picked.length;
+  document.getElementById('recipModal').classList.add('show');
+  const ok=await copyText(data);
+  toast(ok?`📋 Copied ${picked.length} recipient${picked.length>1?'s':''} in "First, Last, Email" format.`:'Select the text below and copy it (⌘C).', ok?'success':'load',7000);
 }
+function openOutreach(){window.open(OUTREACH_URL,'_blank');}
+async function recopyRecipients(){const ok=await copyText(document.getElementById('recipData').value);toast(ok?'Copied again.':'Copy failed — select manually.',ok?'success':'error');}
 
 /* ============ presentation: build → preview → publish (explicit) ============ */
 let _presHTML=null, _presMeta=null;
