@@ -511,7 +511,6 @@ function createPresentation(){
   document.getElementById('pRole').value=(document.getElementById('jd').value.split('\n')[0]||'').trim().slice(0,70);
   document.getElementById('pDate').value=new Date().toISOString().slice(0,10);
   document.getElementById('pCount').textContent=picked.length;
-  document.getElementById('publishRow').style.display='none';
   _presHTML=null;
   document.getElementById('presentModal').classList.add('show');
 }
