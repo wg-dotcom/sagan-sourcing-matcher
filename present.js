@@ -34,7 +34,7 @@ YOUR WRITING DNA:
 - Short sentences. Punchy rhythm. Human, natural, C1 English. Never sounds AI-generated or corporate.
 - NEVER use em dashes as connectors. Use periods, commas, or colons.
 - NEVER use: "leveraging","synergy","best-in-class","proven track record","dynamic","passionate about","extensive experience","well-versed","seasoned professional","boasts","adept at". These = instant delete.
-- Lead with SPECIFICS: tool names, years, certifications, numbers. Be honest about trade-offs.
+- Lead with SPECIFICS: tool names, years, certifications, numbers. This is a SELECTION RATIONALE: confident and positive, why this person earned a spot on the shortlist. Do NOT flag weaknesses, gaps, concerns, or downsides.
 SOMMELIER FLAIR (weave 1-2 naturally, vary per candidate): "the adult in the room","sleep-easy-at-night hire","operator mindset","Swiss Army knife","builder DNA","worth every penny","calculated risk worth taking","force multiplier","the glue person".`;
 
 /* ---------- resume fetch + extract ---------- */
@@ -131,9 +131,9 @@ Return ONLY valid JSON (no markdown):
  "languages":[{"name":"","level":""}],
  "skills":["skill1","skill2","... up to 12"],
  "summary":"2-3 sentence professional summary, first name only",
- "why":["3-5 punchy bullets, each one line <15 words, start with a specific fact"],
- "note":"2-3 sentences (<60 words), sommelier voice, why ${firstNameOf(c.name)} fits THIS role",
- "detailedNote":"3-5 sentences (80-150 words), deeper honest analysis incl. one trade-off",
+ "why":["3-5 punchy bullets, each one line <15 words, start with a specific fact — reasons we chose them"],
+ "note":"2-3 sentences (<60 words), sommelier voice: why we're excited to put ${firstNameOf(c.name)} forward for THIS role",
+ "detailedNote":"3-5 sentences (80-150 words): the CHOOSING RATIONALE — why we picked ${firstNameOf(c.name)} for ${opts.member}. Confident, specific, positive. Do NOT mention weaknesses, gaps, concerns, or trade-offs.",
  "fitIndicators":["[candidate fact] -> [why it matters for ${opts.member}]","...x3"],
  "strengthScores":{"Skill A":88,"Skill B":92,"...6 skills relevant to the role, honest 0-100":80}
 }`;
@@ -194,7 +194,6 @@ function cvBlock(c){
   </div></details>`;
 }
 function presCandidateCard(c,i){
-  const col=scoreColor(c.score);
   const bars=Object.entries(c.strengthScores).slice(0,6);
   return `<div class="candidate-card fade-in"><div class="card ${i===0?'featured':''}">
     <div class="card-top">
@@ -203,10 +202,9 @@ function presCandidateCard(c,i){
         <div>
           <div class="card-name">${pesc(c.first)}</div>
           <div class="card-location">${c.country?'📍 '+pesc(c.country):''}${c.applied?' · '+pesc(c.applied):''}</div>
-          <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span>${i===0?'<span class="badge badge-shortlisted">Top match</span>':''}</div>
+          <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span>${i===0?'<span class="badge badge-shortlisted">Top pick</span>':''}</div>
         </div>
       </div>
-      <div class="card-rate"><div class="card-rate-amount" style="color:${col}">${c.score}<span style="font-size:14px">%</span></div><div class="card-rate-period">Role Match</div></div>
     </div>
     <div class="card-body">
       ${c.note?`<div class="card-narrative"><strong>${pesc(c.note)}</strong></div>`:''}
@@ -218,7 +216,7 @@ function presCandidateCard(c,i){
       <div class="card-actions">${c.video?`<a class="video-intro-btn" href="${pesc(c.video)}" target="_blank">🎬 Watch Intro Video</a>`:''}</div>
       ${cvBlock(c)}
     </div>
-    ${c.detailedNote?`<div class="card-footer"><div class="card-recruiter-note"><div class="recruiter-note-title">Recruiter Note</div><p>${pesc(c.detailedNote)}</p></div></div>`:''}
+    ${c.detailedNote?`<div class="card-footer"><div class="card-recruiter-note"><div class="recruiter-note-title">Why we're presenting ${pesc(c.first)}</div><p>${pesc(c.detailedNote)}</p></div></div>`:''}
   </div></div>`;
 }
 
