@@ -223,6 +223,7 @@
       <div class="fg"><label class="lbl">Batch #</label><input id="pBatch" type="number" value="1" min="1"/><div class="hint">Batch 2+ publishes to a new <code>-b#</code> repo.</div></div>
       <div class="fg"><label class="lbl">Date</label><input id="pDate" type="date"/></div>
     </div>
+    <div class="fg"><label class="lbl">Talent Advisor (card shown on the page)</label><select id="pAdvisor"></select></div>
     <div class="fg"><label class="lbl">Role context for the AI notes (optional)</label><textarea id="pIntro" rows="3" placeholder="Pain points / must-haves to sharpen the write-ups. Not shown on the page."></textarea></div>
     <div style="display:flex;gap:10px;margin-top:6px">
       <button class="btn btn-ghost" style="flex:1" onclick="closePresent()">Cancel</button>
@@ -559,6 +560,13 @@ function createPresentation(){
   document.getElementById('pRole').value=(document.getElementById('jd').value.split('\n')[0]||'').trim().slice(0,70);
   document.getElementById('pDate').value=new Date().toISOString().slice(0,10);
   document.getElementById('pCount').textContent=picked.length;
+  // populate advisor dropdown (directory + your Settings profile)
+  const sel=document.getElementById('pAdvisor');
+  let ta={};try{ta=JSON.parse(localStorage.getItem(LS.ta)||'{}')}catch(e){}
+  const opts=[];
+  if(ta.name) opts.push(`<option value="__me__">${esc(ta.name)} (my Settings profile)</option>`);
+  opts.push(...Object.keys(ADVISORS).map(k=>`<option value="${k}">${esc(ADVISORS[k].name)}</option>`));
+  sel.innerHTML=opts.join(''); sel.value=ta.name?'__me__':'jesus';
   _presHTML=null;
   document.getElementById('presentModal').classList.add('show');
 }
@@ -570,7 +578,10 @@ async function genPresentation(){
   const role=document.getElementById('pRole').value.trim();
   if(!member||!role){toast('Member/company and role are required.','error');return;}
   if(!getKey('anthropic')){toast('Add your Anthropic key in Settings — fetching CVs + writing notes needs it.','error');return;}
-  let adv={};try{adv=JSON.parse(localStorage.getItem(LS.ta)||'{}')}catch(e){}
+  const advSel=document.getElementById('pAdvisor').value;
+  let adv;
+  if(advSel==='__me__'){ try{adv=JSON.parse(localStorage.getItem(LS.ta)||'{}')}catch(e){adv={}} }
+  else adv=ADVISORS[advSel]||ADVISORS.jesus;
   const o={member,role,batchNumber:parseInt(document.getElementById('pBatch').value)||1,
     batchDate:document.getElementById('pDate').value||new Date().toISOString().slice(0,10),
     introNote:document.getElementById('pIntro').value.trim(), jd:document.getElementById('jd').value.trim(), advisor:adv};
