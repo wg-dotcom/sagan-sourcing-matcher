@@ -66,7 +66,8 @@ function driveDirect(url){
   let m=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||url.match(/[?&]id=([\w-]+)/);
   return m?`https://drive.google.com/uc?export=download&id=${m[1]}`:url;
 }
-function cvProxy(){ try{return (localStorage.getItem('sm_cvproxy')||'').trim()}catch(e){return ''} }
+const DEFAULT_CV_PROXY='https://sagan-cv-proxy.jesus-p.workers.dev/?url=';
+function cvProxy(){ try{return (localStorage.getItem('sm_cvproxy')||DEFAULT_CV_PROXY).trim()}catch(e){return DEFAULT_CV_PROXY} }
 async function fetchBytes(purl, isJson){
   const r=await fetch(purl,{signal:AbortSignal.timeout(7000)});
   if(!r.ok) throw new Error('bad');

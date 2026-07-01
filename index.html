@@ -192,7 +192,7 @@
     <p class="hint" style="margin-bottom:16px">Keys are stored only in this browser (localStorage). They are sent only directly to Anthropic/GitHub. Matching uses an on-device model — no embedding key needed.</p>
     <div class="fg"><label class="lbl">Anthropic API key (matching)</label><input id="kAnthropic" type="password" placeholder="sk-ant-…"/></div>
     <div class="fg"><label class="lbl">GitHub PAT (publish pages)</label><input id="kGithub" type="password" placeholder="ghp_…"/></div>
-    <div class="fg"><label class="lbl">CV proxy URL (optional — for fetching resumes)</label><input id="kCvproxy" placeholder="https://your-worker.workers.dev/?url="/><div class="hint">Makes CV fetching reliable. Put <code>{url}</code> where the encoded link goes, or end with <code>?url=</code>. Without it, the tool tries public proxies (often blocked).</div></div>
+    <div class="fg"><label class="lbl">CV proxy URL (optional — override)</label><input id="kCvproxy" placeholder="Using the shared Sagan CV proxy by default"/><div class="hint">A shared proxy is already built in, so CVs fetch automatically — no setup needed. Only fill this to point at a different proxy (<code>{url}</code> placeholder or ends with <code>?url=</code>).</div></div>
     <div class="section-title">Your Talent Advisor profile</div>
     <div class="row2">
       <div class="fg"><label class="lbl">Name</label><input id="taName" placeholder="Jesus Pacheco"/></div>
