@@ -66,6 +66,23 @@ function driveDirect(url){
   let m=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||url.match(/[?&]id=([\w-]+)/);
   return m?`https://drive.google.com/uc?export=download&id=${m[1]}`:url;
 }
+// Reconstruct text from pdf.js items using glyph POSITIONS (not a blind join).
+// Some resumes emit one glyph per item; joining with spaces shatters dates like
+// "02/2024" into "0 2 / 2 0 2 4". This rebuilds words/lines from x/y positions.
+function pdfItemsToText(items){
+  let out=''; let prev=null;
+  for(const it of items){
+    if(!it.str){ if(it.hasEOL){out+='\n';prev=null;} continue; }
+    const x=it.transform[4], y=it.transform[5], fs=Math.abs(it.transform[0])||Math.abs(it.transform[3])||10;
+    if(prev){
+      if(Math.abs(y-prev.y)>fs*0.5) out+='\n';
+      else if(x-(prev.x+prev.w)>fs*0.28) out+=' ';
+    }
+    out+=it.str;
+    if(it.hasEOL){ out+='\n'; prev=null; } else prev={x,y,w:it.width||0};
+  }
+  return out.replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n');
+}
 const DEFAULT_CV_PROXY='https://sagan-cv-proxy.jesus-p.workers.dev/?url=';
 function cvProxy(){ try{return (localStorage.getItem('sm_cvproxy')||DEFAULT_CV_PROXY).trim()}catch(e){return DEFAULT_CV_PROXY} }
 async function fetchBytes(purl, isJson){
@@ -92,7 +109,7 @@ async function fetchResumeText(url){
   if(head.startsWith('%PDF')){
     const lib=await pdfjs(); if(!lib) return null;
     try{ const pdf=await lib.getDocument({data:bytes}).promise; let txt='';
-      for(let i=1;i<=Math.min(pdf.numPages,8);i++){ const pg=await pdf.getPage(i); const ct=await pg.getTextContent(); txt+=ct.items.map(x=>x.str).join(' ')+'\n'; }
+      for(let i=1;i<=Math.min(pdf.numPages,8);i++){ const pg=await pdf.getPage(i); txt+=pdfItemsToText((await pg.getTextContent()).items)+'\n'; }
       return txt.trim().length>80?txt.slice(0,9000):null;
     }catch(e){ return null; }
   }
