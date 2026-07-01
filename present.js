@@ -304,11 +304,11 @@ function presScorecard(b){
   if(!sc || !sc.dimensions || !sc.dimensions.length || !cands.length) return presComparison(cands); // fallback (e.g. older batches)
   const dims=sc.dimensions.slice(0,4);
   const rowFor=i=>((sc.rows||[]).find(r=>r.i===i)||{scores:[],bestFor:''});
-  const head=`<tr><th>Candidate</th>${dims.map(d=>`<th>${pesc(d)}</th>`).join('')}<th>Languages</th><th>Available</th><th>Best for</th></tr>`;
+  const head=`<tr><th>Candidate</th>${dims.map(d=>`<th>${pesc(d)}</th>`).join('')}<th>Languages</th><th>Best for</th></tr>`;
   const body=cands.map((c,i)=>{
     const r=rowFor(i);
     const langs=(c.languages||[]).filter(l=>l.name).map(l=>pesc(l.name)).join(', ');
-    return `<tr><td class="cmp-name">${pesc(c.first)}</td>${dims.map((d,di)=>`<td class="cmp-dots">${scoreDots((r.scores||[])[di])}</td>`).join('')}<td>${langs}</td><td>${c.video?'<span class="avail">▶ Video</span>':''}</td><td>${r.bestFor?`<span class="best-tag">${pesc(r.bestFor)}</span>`:''}</td></tr>`;
+    return `<tr><td class="cmp-name">${pesc(c.first)}</td>${dims.map((d,di)=>`<td class="cmp-dots">${scoreDots((r.scores||[])[di])}</td>`).join('')}<td>${langs}</td><td>${r.bestFor?`<span class="best-tag">${pesc(r.bestFor)}</span>`:''}</td></tr>`;
   }).join('');
   return `<div class="comparison-section fade-in"><div class="cmp-title">At a glance</div>
     <div class="comparison-table-wrap"><table class="comparison-table scorecard"><thead>${head}</thead><tbody>${body}</tbody></table></div>
