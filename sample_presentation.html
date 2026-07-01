@@ -30,6 +30,30 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
 .editorial-text{font-size:17px;line-height:1.85;color:var(--text-mid)}.editorial-text p{margin-bottom:16px}.editorial-divider{width:48px;height:3px;background:var(--primary);border-radius:2px;margin-top:32px}
 .candidates-section{background:var(--bg-light);padding:72px 0;margin-top:72px}
 .candidates-header{text-align:center;padding:0 24px 40px}.candidates-header h2{font-family:var(--font-heading);font-size:32px;font-weight:700;margin-bottom:8px}.candidates-header p{font-family:var(--font-meta);font-size:14px;color:var(--text-light)}
+.batch-switcher{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 auto 36px;padding:0 24px}
+.batch-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:1.5px solid var(--border-strong);border-radius:10px;background:var(--bg-card);font-family:var(--font-meta);font-size:12px;font-weight:600;color:var(--text-light);cursor:pointer;transition:.18s}
+.batch-btn:hover{border-color:var(--primary);color:var(--text-primary)}
+.batch-btn.active{background:var(--dark);border-color:var(--dark);color:#fff}
+.batch-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;background:var(--primary);color:#fff;font-size:11px;font-weight:700}
+.batch-btn.active .batch-count{background:var(--highlight);color:var(--dark)}
+.batch-panel.hidden{display:none}
+.comparison-section{max-width:1100px;margin:8px auto 0;padding:0 40px 8px}
+.cmp-title{font-family:var(--font-meta);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--primary);text-align:center;margin-bottom:16px}
+.comparison-table-wrap{overflow-x:auto;border-radius:14px;box-shadow:var(--shadow-md)}
+.comparison-table{width:100%;border-collapse:collapse;background:var(--bg-card);font-size:13px;color:var(--text-mid);min-width:600px}
+.comparison-table thead th{background:var(--dark);color:#fff;padding:13px 16px;text-align:left;font-family:var(--font-meta);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+.comparison-table tbody td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top}
+.comparison-table tbody tr:last-child td{border-bottom:none}.comparison-table tbody tr:hover{background:var(--bg-card-hover)}
+.comparison-table .cmp-comp{font-weight:700;color:var(--primary);white-space:nowrap}
+.comparison-table.scorecard th,.comparison-table.scorecard td{text-align:center}
+.comparison-table.scorecard th:first-child,.comparison-table.scorecard td:first-child{text-align:left}
+.comparison-table .cmp-name{font-weight:700;color:var(--text-primary);white-space:nowrap}
+.comparison-table .cmp-dots{letter-spacing:2px;font-size:13px;white-space:nowrap}
+.cmp-dots .dot-on{color:var(--primary)}.cmp-dots .dot-off{color:var(--border-strong)}
+.comparison-table .avail{color:#1f7a5e;font-weight:600;white-space:nowrap}
+.comparison-table .best-tag{display:inline-block;background:var(--tag-bg);color:var(--tag-color);font-family:var(--font-meta);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.cmp-legend{max-width:1100px;margin:12px auto 0;padding:0 40px;font-size:11px;color:var(--text-light);text-align:center}
+.cmp-legend .dot-on{color:var(--primary)}.cmp-legend .dot-off{color:var(--border-strong)}
 .candidate-card{max-width:1100px;margin:0 auto 32px;padding:0 40px}
 .card{background:var(--bg-card);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);transition:transform .3s,box-shadow .3s}
 .card:hover{transform:translateY(-2px);box-shadow:0 1px 3px rgba(0,0,0,.04),0 16px 48px rgba(0,0,0,.1)}.card.featured{box-shadow:var(--shadow-md),0 0 0 1px #a6771433}
@@ -79,57 +103,115 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
   <div class="hero-brand"><img class="logo-img" src="https://saganrecruitment.com/wp-content/uploads/2025/10/Sagan-Logo-2-e1759568299542.png" alt="Sagan"/><div class="logo-sep"></div><span class="logo-sub">Talent Selection</span></div>
   <div class="hero-eyebrow">Sagan Talent Search</div>
   <h1><strong>Senior Bookkeeper</strong> Candidates for Rubicon</h1>
-  <p class="hero-sub">Curated, anonymized talent matched to your specific needs. Identities are revealed at interview stage.</p>
+  <p class="hero-sub">Curated talent matched to your specific needs for this role.</p>
   <div class="hero-meta">
-    <div class="hero-meta-item"><span class="hero-meta-label">Candidates</span><span class="hero-meta-value">1 profiles</span></div>
-    <div class="hero-meta-item"><span class="hero-meta-label">Batch</span><span class="hero-meta-value">1 · June 30, 2026</span></div>
+    <div class="hero-meta-item"><span class="hero-meta-label">Candidates</span><span class="hero-meta-value">3 profiles</span></div>
+    <div class="hero-meta-item"><span class="hero-meta-label">Batch</span><span class="hero-meta-value">Batch 1 · June 29, 2026</span></div>
     <div class="hero-meta-item"><span class="hero-meta-label">Advisor</span><span class="hero-meta-value">Jesus Pacheco</span></div>
   </div>
 </div></section>
-
 <section class="candidates-section">
-  <div class="candidates-header fade-in"><h2>Candidate Profiles · Batch 1</h2><p>Anonymized for screening. First names only.</p></div>
-  <div class="candidate-card fade-in"><div class="card featured">
+  <div class="candidates-header fade-in"><h2>Candidate Profiles</h2></div>
+  
+  <div class="batch-panel" id="batch-1"><div class="candidate-card fade-in"><div class="card featured">
     <div class="card-top">
       <div class="card-identity">
         <div class="card-avatar featured-avatar">J</div>
         <div>
           <div class="card-name">Junil</div>
           <div class="card-location">📍 Philippines · Bookkeeper</div>
-          <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span><span class="badge badge-shortlisted">Top match</span></div>
+          <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span><span class="badge badge-shortlisted">Top pick</span></div>
         </div>
       </div>
-      <div class="card-rate"><div class="card-rate-amount" style="color:#1f7a5e">95<span style="font-size:14px">%</span></div><div class="card-rate-period">Role Match</div></div>
+      <div class="card-rate"><div class="card-rate-amount" style="color:var(--highlight)">$2,000</div><div class="card-rate-period">Expected · monthly</div></div>
     </div>
     <div class="card-body">
-      <div class="card-narrative"><strong>Junil is the sleep-easy-at-night hire here.</strong></div>
-      <div class="card-section-title">Why Junil</div><ul class="strength-list"><li>8+ yrs US bookkeeping</li><li>QBO + Bill.com certified</li></ul>
-      <div class="card-section-title">Experience Highlights</div><div class="experience-list"><div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div></div><div class="exp-content"><div class="exp-role">Senior Bookkeeper</div><div class="exp-company">ABC · 2021-Present</div></div></div></div>
-      <div class="card-section-title">Platforms &amp; Tools</div><div class="tags-cluster"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span></div>
-      <div class="card-section-title">Fit Indicators</div><div class="fit-grid"><div class="fit-item"><div class="fit-label">QBO expert -&gt; matches your stack</div></div></div>
-      <div class="card-section-title">Strength Profile</div><div class="strength-bars"><div class="bar-item"><div class="bar-label">QBO</div><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div></div><div class="bar-item"><div class="bar-label">Bill.com</div><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div></div><div class="bar-item"><div class="bar-label">Reconciliation</div><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div></div></div>
+      <div class="card-section-title">Experience Highlights</div><div class="experience-list"><div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div></div><div class="exp-content"><div class="exp-role">Senior Bookkeeper</div><div class="exp-company">Retail</div></div></div></div>
+      <div class="card-section-title">Platforms &amp; Tools</div><div class="tags-cluster"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span><span class="ctag ctag-key">Xero</span></div>
+      <div class="card-section-title">Fit Indicators</div><div class="fit-grid"><div class="fit-item"><div class="fit-label">QBO expert -&gt; your stack</div></div></div>
+      
       <div class="card-actions"><a class="video-intro-btn" href="https://v" target="_blank">🎬 Watch Intro Video</a></div>
-      <details class="cv"><summary>📄 View anonymized CV</summary><div class="cv-body">
-    <p class="cv-summary">Full-charge bookkeeper with US SMB experience.</p>
+      <details class="cv"><summary>📄 View CV</summary><div class="cv-body">
+    
     <div class="cv-sub">Experience</div>
-    <div class="cv-exp"><div class="cv-exp-head"><span class="cv-role">Senior Bookkeeper</span><span class="cv-dates">2021-Present</span></div>
-    <div class="cv-company">ABC</div>
+    <div class="cv-exp"><div class="cv-exp-head"><span class="cv-role">Senior Bookkeeper</span></div>
+    <div class="cv-company">Retail</div>
     <ul class="cv-bullets"><li>Owned books for 12 US SMBs</li></ul></div>
-    <div class="cv-sub">Education</div><div class="cv-edu"><strong>BS Accountancy</strong> · University · 2015</div>
-    <div class="cv-sub">Skills</div><div class="cv-tags"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span></div><div class="cv-sub">Certifications</div><div class="cv-tags"><span class="ctag">QBO ProAdvisor</span></div><div class="cv-sub">Languages</div><div class="cv-line">English (Fluent)</div>
-    <div class="cv-note">Identifying details (full name, contact, links) removed for screening.</div>
+    <div class="cv-sub">Education</div><div class="cv-edu"><strong>BS Accountancy</strong> · University</div>
+    <div class="cv-sub">Skills</div><div class="cv-tags"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span><span class="ctag ctag-key">Xero</span></div><div class="cv-sub">Certifications</div><div class="cv-tags"><span class="ctag">QBO ProAdvisor</span></div><div class="cv-sub">Languages</div><div class="cv-line">English</div>
   </div></details>
     </div>
-    <div class="card-footer"><div class="card-recruiter-note"><div class="recruiter-note-title">Recruiter Note</div><p>Eight years of full-charge books for US SMBs. Trade-off: prefers async.</p></div></div>
-  </div></div>
+    <div class="card-footer"><div class="card-recruiter-note"><div class="recruiter-note-title">Why we're presenting Junil</div><p>We chose Junil because they have run full-charge books for US SMBs for years, fluent in the exact stack this role needs.</p></div></div>
+  </div></div><div class="candidate-card fade-in"><div class="card ">
+    <div class="card-top">
+      <div class="card-identity">
+        <div class="card-avatar ">M</div>
+        <div>
+          <div class="card-name">Maria</div>
+          <div class="card-location">📍 Argentina · Bookkeeper</div>
+          <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span></div>
+        </div>
+      </div>
+      <div class="card-rate"><div class="card-rate-amount" style="color:var(--highlight)">$2,000</div><div class="card-rate-period">Expected · monthly</div></div>
+    </div>
+    <div class="card-body">
+      <div class="card-section-title">Experience Highlights</div><div class="experience-list"><div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div></div><div class="exp-content"><div class="exp-role">Senior Bookkeeper</div><div class="exp-company">Insurance</div></div></div></div>
+      <div class="card-section-title">Platforms &amp; Tools</div><div class="tags-cluster"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span><span class="ctag ctag-key">Xero</span></div>
+      <div class="card-section-title">Fit Indicators</div><div class="fit-grid"><div class="fit-item"><div class="fit-label">QBO expert -&gt; your stack</div></div></div>
+      
+      <div class="card-actions"><a class="video-intro-btn" href="https://v" target="_blank">🎬 Watch Intro Video</a></div>
+      <details class="cv"><summary>📄 View CV</summary><div class="cv-body">
+    
+    <div class="cv-sub">Experience</div>
+    <div class="cv-exp"><div class="cv-exp-head"><span class="cv-role">Senior Bookkeeper</span></div>
+    <div class="cv-company">Insurance</div>
+    <ul class="cv-bullets"><li>Owned books for 12 US SMBs</li></ul></div>
+    <div class="cv-sub">Education</div><div class="cv-edu"><strong>BS Accountancy</strong> · University</div>
+    <div class="cv-sub">Skills</div><div class="cv-tags"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span><span class="ctag ctag-key">Xero</span></div><div class="cv-sub">Certifications</div><div class="cv-tags"><span class="ctag">QBO ProAdvisor</span></div><div class="cv-sub">Languages</div><div class="cv-line">English · Spanish</div>
+  </div></details>
+    </div>
+    <div class="card-footer"><div class="card-recruiter-note"><div class="recruiter-note-title">Why we're presenting Maria</div><p>We chose Maria because they have run full-charge books for US SMBs for years, fluent in the exact stack this role needs.</p></div></div>
+  </div></div><div class="candidate-card fade-in"><div class="card ">
+    <div class="card-top">
+      <div class="card-identity">
+        <div class="card-avatar ">C</div>
+        <div>
+          <div class="card-name">Carlos</div>
+          <div class="card-location">📍 Mexico · Bookkeeper</div>
+          <div class="card-badges"><span class="badge badge-shortlisted">Shortlisted</span></div>
+        </div>
+      </div>
+      <div class="card-rate"><div class="card-rate-amount" style="color:var(--highlight)">$2,000</div><div class="card-rate-period">Expected · monthly</div></div>
+    </div>
+    <div class="card-body">
+      <div class="card-section-title">Experience Highlights</div><div class="experience-list"><div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div></div><div class="exp-content"><div class="exp-role">Senior Bookkeeper</div><div class="exp-company">Logistics</div></div></div></div>
+      <div class="card-section-title">Platforms &amp; Tools</div><div class="tags-cluster"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span><span class="ctag ctag-key">Xero</span></div>
+      <div class="card-section-title">Fit Indicators</div><div class="fit-grid"><div class="fit-item"><div class="fit-label">QBO expert -&gt; your stack</div></div></div>
+      
+      <div class="card-actions"><a class="video-intro-btn" href="https://v" target="_blank">🎬 Watch Intro Video</a></div>
+      <details class="cv"><summary>📄 View CV</summary><div class="cv-body">
+    
+    <div class="cv-sub">Experience</div>
+    <div class="cv-exp"><div class="cv-exp-head"><span class="cv-role">Senior Bookkeeper</span></div>
+    <div class="cv-company">Logistics</div>
+    <ul class="cv-bullets"><li>Owned books for 12 US SMBs</li></ul></div>
+    <div class="cv-sub">Education</div><div class="cv-edu"><strong>BS Accountancy</strong> · University</div>
+    <div class="cv-sub">Skills</div><div class="cv-tags"><span class="ctag ctag-key">QuickBooks Online</span><span class="ctag ctag-key">Bill.com</span><span class="ctag ctag-key">Xero</span></div><div class="cv-sub">Certifications</div><div class="cv-tags"><span class="ctag">QBO ProAdvisor</span></div><div class="cv-sub">Languages</div><div class="cv-line">English</div>
+  </div></details>
+    </div>
+    <div class="card-footer"><div class="card-recruiter-note"><div class="recruiter-note-title">Why we're presenting Carlos</div><p>We chose Carlos because they have run full-charge books for US SMBs for years, fluent in the exact stack this role needs.</p></div></div>
+  </div></div><div class="comparison-section fade-in"><div class="cmp-title">At a glance</div>
+    <div class="comparison-table-wrap"><table class="comparison-table scorecard"><thead><tr><th>Candidate</th><th>QBO Proficiency</th><th>Monthly Close</th><th>AP/AR Depth</th><th>Tool Ecosystem</th><th>Languages</th><th>Available</th><th>Best for</th></tr></thead><tbody><tr><td class="cmp-name">Junil</td><td class="cmp-dots"><span class="dot-on">●●●●●</span><span class="dot-off"></span></td><td class="cmp-dots"><span class="dot-on">●●●●●</span><span class="dot-off"></span></td><td class="cmp-dots"><span class="dot-on">●●●●</span><span class="dot-off">○</span></td><td class="cmp-dots"><span class="dot-on">●●●●●</span><span class="dot-off"></span></td><td>English</td><td><span class="avail">▶ Video</span></td><td><span class="best-tag">Multi-Entity</span></td></tr><tr><td class="cmp-name">Maria</td><td class="cmp-dots"><span class="dot-on">●●●</span><span class="dot-off">○○</span></td><td class="cmp-dots"><span class="dot-on">●●●●●</span><span class="dot-off"></span></td><td class="cmp-dots"><span class="dot-on">●●●</span><span class="dot-off">○○</span></td><td class="cmp-dots"><span class="dot-on">●●●</span><span class="dot-off">○○</span></td><td>English, Spanish</td><td><span class="avail">▶ Video</span></td><td><span class="best-tag">GAAP Depth</span></td></tr><tr><td class="cmp-name">Carlos</td><td class="cmp-dots"><span class="dot-on">●●●●</span><span class="dot-off">○</span></td><td class="cmp-dots"><span class="dot-on">●●</span><span class="dot-off">○○○</span></td><td class="cmp-dots"><span class="dot-on">●●●●●</span><span class="dot-off"></span></td><td class="cmp-dots"><span class="dot-on">●●●</span><span class="dot-off">○○</span></td><td>English</td><td><span class="avail">▶ Video</span></td><td><span class="best-tag">AP/AR Volume</span></td></tr></tbody></table></div>
+    <div class="cmp-legend">Rated 1–5 against this role &nbsp;·&nbsp; <span class="dot-on">●●●●●</span> strong fit &nbsp;·&nbsp; <span class="dot-on">●●●</span><span class="dot-off">○○</span> developing</div></div></div>
 </section>
+<script type="application/json" id="sm-batches">{"member":"Rubicon","role":"Senior Bookkeeper","advisor":{"name":"Jesus Pacheco","role":"Sagan · Head of Revenue","photo":"https://saganrecruitment.com/wp-content/uploads/2025/10/Jesus-Pacheco.jpeg","summary":"Jesus leads Revenue at Sagan and personally oversees this search. He is your direct point of contact for scheduling interviews and coordinating next steps."},"batches":[{"batch":1,"date":"2026-06-29","cands":[{"first":"Junil","country":"Philippines","applied":"Bookkeeper","score":95,"comp":"$2000","note":"Junil is a sharp full-charge bookkeeper.","detailedNote":"We chose Junil because they have run full-charge books for US SMBs for years, fluent in the exact stack this role needs.","why":["a"],"fitIndicators":["QBO expert -> your stack"],"strengthScores":{},"skills":["QuickBooks Online","Bill.com","Xero"],"experience":[{"role":"Senior Bookkeeper","industry":"Retail","description":"Owned books for 12 US SMBs"}],"education":[{"degree":"BS Accountancy","school":"University"}],"certifications":["QBO ProAdvisor"],"languages":[{"name":"English"}],"video":"https://v"},{"first":"Maria","country":"Argentina","applied":"Bookkeeper","score":95,"comp":"$2000","note":"Maria is a sharp full-charge bookkeeper.","detailedNote":"We chose Maria because they have run full-charge books for US SMBs for years, fluent in the exact stack this role needs.","why":["a"],"fitIndicators":["QBO expert -> your stack"],"strengthScores":{},"skills":["QuickBooks Online","Bill.com","Xero"],"experience":[{"role":"Senior Bookkeeper","industry":"Insurance","description":"Owned books for 12 US SMBs"}],"education":[{"degree":"BS Accountancy","school":"University"}],"certifications":["QBO ProAdvisor"],"languages":[{"name":"English"},{"name":"Spanish"}],"video":"https://v"},{"first":"Carlos","country":"Mexico","applied":"Bookkeeper","score":95,"comp":"$2000","note":"Carlos is a sharp full-charge bookkeeper.","detailedNote":"We chose Carlos because they have run full-charge books for US SMBs for years, fluent in the exact stack this role needs.","why":["a"],"fitIndicators":["QBO expert -> your stack"],"strengthScores":{},"skills":["QuickBooks Online","Bill.com","Xero"],"experience":[{"role":"Senior Bookkeeper","industry":"Logistics","description":"Owned books for 12 US SMBs"}],"education":[{"degree":"BS Accountancy","school":"University"}],"certifications":["QBO ProAdvisor"],"languages":[{"name":"English"}],"video":"https://v"}],"scorecard":{"dimensions":["QBO Proficiency","Monthly Close","AP/AR Depth","Tool Ecosystem"],"rows":[{"i":0,"scores":[5,5,4,5],"bestFor":"Multi-Entity"},{"i":1,"scores":[3,5,3,3],"bestFor":"GAAP Depth"},{"i":2,"scores":[4,2,5,3],"bestFor":"AP/AR Volume"}]}}]}</script>
 <div class="advisor-section fade-in"><div class="advisor-section-label">Your Talent Advisor</div>
   <div class="advisor-card">
-    <div class="advisor-avatar" style="display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:700;font-size:26px;color:var(--primary)">JP</div>
+    <img class="advisor-avatar" src="https://saganrecruitment.com/wp-content/uploads/2025/10/Jesus-Pacheco.jpeg" alt="Jesus Pacheco"/>
     <div class="advisor-info"><div class="advisor-name">Jesus Pacheco</div>
-      <div class="advisor-role">Head of Revenue, Sagan</div>
-      <p class="advisor-summary">Your dedicated point of contact at Sagan. Reach out any time to move forward with interviews.</p>
-      <div class="advisor-contact">✉ <a href="mailto:jesus.p@getsagan.com">jesus.p@getsagan.com</a></div>
+      <div class="advisor-role">Sagan · Head of Revenue</div>
+      <p class="advisor-summary">Jesus leads Revenue at Sagan and personally oversees this search. He is your direct point of contact for scheduling interviews and coordinating next steps.</p>
+      <div class="advisor-contact"></div>
     </div>
   </div>
 </div>
@@ -139,7 +221,10 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
   <div class="sagan-stat"><div class="sagan-stat-number">30+</div><div class="sagan-stat-label">Countries</div></div>
 </div></div>
 <section class="footer-cta"><h2>Ready to <strong>move forward</strong>?</h2><p>Tell us which candidates you'd like to interview and we'll coordinate next steps.</p>
-  <a class="footer-contact" href="mailto:jesus.p@getsagan.com?subject=Re%3A%20Senior%20Bookkeeper%20candidates">Contact Jesus</a></section>
+  </section>
 <footer class="site-footer"><div><img src="https://saganrecruitment.com/wp-content/uploads/2025/10/Sagan-Logo-2-e1759568299542.png" alt="Sagan"/></div><div style="margin-top:10px">Redefining Recruitment · <a href="https://getsagan.com" style="color:var(--primary)">getsagan.com</a></div></footer>
-<script>const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.1});document.querySelectorAll('.fade-in').forEach(el=>io.observe(el));</script>
+<script>
+function showBatch(n){document.querySelectorAll('.batch-panel').forEach(p=>p.classList.toggle('hidden',p.id!=='batch-'+n));document.querySelectorAll('.batch-btn').forEach(b=>b.classList.toggle('active',b.dataset.b===String(n)));const s=document.querySelector('.candidates-section');if(s)window.scrollTo({top:s.offsetTop-16,behavior:'smooth'});}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.1});document.querySelectorAll('.fade-in').forEach(el=>io.observe(el));
+</script>
 </body></html>
