@@ -157,12 +157,12 @@ ${resumeText?'ACTUAL RESUME TEXT (extract job history, education, skills VERBATI
 ${ctx}
 
 Produce an ANONYMIZED candidate profile + recruiter notes for a presentation to the member.
-ANONYMIZATION RULES (critical): Never output the candidate's last name, email, phone number, LinkedIn or any URL, or home address. Refer to them only as "${firstNameOf(c.name)}". Company names, roles, schools, and skills are fine to include.
+ANONYMIZATION RULES (critical): Never output the candidate's last name, email, phone number, LinkedIn or any URL, or home address. Refer to them only as "${firstNameOf(c.name)}". Roles, schools, skills, and industries are fine. Do NOT output employer company names — give each employer's INDUSTRY/sector instead. If any field is unknown, use an empty string "" (never write "Not specified", "N/A", "Unknown", or "-").
 ACCURACY: Use ONLY facts in the resume text / profile above. Never invent jobs, companies, certs, or metrics.
 
 Return ONLY valid JSON (no markdown):
 {
- "experience":[{"role":"Exact title","company":"Company","dates":"Dates as written","description":"Key bullets, newline-separated, verbatim-ish"}],
+ "experience":[{"role":"Exact title","industry":"Employer's industry/sector in 1-3 words (e.g. Retail, Insurance, Healthcare, SaaS, Logistics) — NOT the company name","description":"Key bullets, newline-separated, verbatim-ish"}],
  "education":[{"degree":"","school":"","year":""}],
  "certifications":["..."],
  "languages":[{"name":"","level":""}],
@@ -188,7 +188,7 @@ Return ONLY valid JSON (no markdown):
     fitIndicators:(d.fitIndicators||[]).map(A).filter(Boolean).slice(0,3),
     strengthScores:d.strengthScores||{},
     skills:(d.skills||[]).map(s=>A(s)).filter(Boolean),
-    experience:(d.experience||[]).map(e=>({role:A(e.role),company:A(e.company),dates:A(e.dates),description:A(e.description)})),
+    experience:(d.experience||[]).map(e=>({role:A(e.role),industry:A(e.industry||''),description:A(e.description)})),
     education:(d.education||[]).map(e=>({degree:A(e.degree),school:A(e.school),year:A(e.year)})),
     certifications:(d.certifications||[]).map(A).filter(Boolean),
     languages:(d.languages||[]).map(l=>({name:A(l.name),level:A(l.level)})),
@@ -216,11 +216,11 @@ async function processAll(cands, opts, onProgress){
 /* ---------- rendering ---------- */
 function scoreColor(s){return s>=85?'#1f7a5e':s>=70?'#093a3e':s>=55?'#a67714':'#b5502f'}
 function cvBlock(c){
-  const exp=c.experience.filter(e=>e.role||e.company).map(e=>`
-    <div class="cv-exp"><div class="cv-exp-head"><span class="cv-role">${pesc(e.role)}</span><span class="cv-dates">${pesc(e.dates)}</span></div>
-    <div class="cv-company">${pesc(e.company)}</div>
+  const exp=c.experience.filter(e=>e.role||e.industry).map(e=>`
+    <div class="cv-exp"><div class="cv-exp-head"><span class="cv-role">${pesc(e.role)}</span></div>
+    <div class="cv-company">${pesc(e.industry||'')}</div>
     ${e.description?'<ul class="cv-bullets">'+e.description.split('\n').filter(x=>x.trim()).map(x=>'<li>'+pesc(x.replace(/^[-•*]\s*/,''))+'</li>').join('')+'</ul>':''}</div>`).join('');
-  const edu=c.education.filter(e=>e.degree||e.school).map(e=>`<div class="cv-edu"><strong>${pesc(e.degree)}</strong> · ${pesc(e.school)} ${e.year?'· '+pesc(e.year):''}</div>`).join('');
+  const edu=c.education.filter(e=>e.degree||e.school).map(e=>`<div class="cv-edu"><strong>${pesc(e.degree)}</strong>${e.school?' · '+pesc(e.school):''}</div>`).join('');
   const certs=c.certifications.length?`<div class="cv-sub">Certifications</div><div class="cv-tags">${c.certifications.map(x=>'<span class="ctag">'+pesc(x)+'</span>').join('')}</div>`:'';
   const langs=c.languages.filter(l=>l.name).length?`<div class="cv-sub">Languages</div><div class="cv-line">${c.languages.filter(l=>l.name).map(l=>pesc(l.name)+(l.level?' ('+pesc(l.level)+')':'')).join(' · ')}</div>`:'';
   const skills=c.skills.length?`<div class="cv-sub">Skills</div><div class="cv-tags">${c.skills.map(x=>'<span class="ctag ctag-key">'+pesc(x)+'</span>').join('')}</div>`:'';
@@ -247,7 +247,7 @@ function presCandidateCard(c,i){
       ${c.comp?`<div class="card-rate"><div class="card-rate-amount" style="color:var(--highlight)">${pesc(formatComp(c.comp))}</div><div class="card-rate-period">Expected · monthly</div></div>`:''}
     </div>
     <div class="card-body">
-      ${c.experience.filter(e=>e.role).length?`<div class="card-section-title">Experience Highlights</div><div class="experience-list">${c.experience.filter(e=>e.role).slice(0,4).map((e,j,a)=>`<div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div>${j<a.length-1?'<div class="exp-line"></div>':''}</div><div class="exp-content"><div class="exp-role">${pesc(e.role)}</div><div class="exp-company">${pesc(e.company)}${e.dates?' · '+pesc(e.dates):''}</div></div></div>`).join('')}</div>`:''}
+      ${c.experience.filter(e=>e.role).length?`<div class="card-section-title">Experience Highlights</div><div class="experience-list">${c.experience.filter(e=>e.role).slice(0,4).map((e,j,a)=>`<div class="exp-item"><div class="exp-dot-col"><div class="exp-dot"></div>${j<a.length-1?'<div class="exp-line"></div>':''}</div><div class="exp-content"><div class="exp-role">${pesc(e.role)}</div>${e.industry?`<div class="exp-company">${pesc(e.industry)}</div>`:''}</div></div>`).join('')}</div>`:''}
       ${c.skills.length?`<div class="card-section-title">Platforms &amp; Tools</div><div class="tags-cluster">${c.skills.slice(0,5).map(s=>'<span class="ctag ctag-key">'+pesc(s)+'</span>').join('')}${c.skills.slice(5).map(s=>'<span class="ctag">'+pesc(s)+'</span>').join('')}</div>`:''}
       ${c.fitIndicators.length?`<div class="card-section-title">Fit Indicators</div><div class="fit-grid">${c.fitIndicators.map(s=>'<div class="fit-item"><div class="fit-label">'+pesc(s)+'</div></div>').join('')}</div>`:''}
       ${bars.length?`<div class="card-section-title">Strength Profile</div><div class="strength-bars">${bars.map(([k,v])=>`<div class="bar-item"><div class="bar-label">${pesc(k)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(0,Math.min(100,v))}%"></div></div></div>`).join('')}</div>`:''}
@@ -262,9 +262,9 @@ function presComparison(cands){
   if(!cands || cands.length<2) return '';
   const rows=cands.map(c=>`<tr>
     <td style="font-weight:600;color:var(--text-primary)">${pesc(c.first)}</td>
-    <td>${pesc(c.country||'—')}</td>
-    <td class="cmp-comp">${pesc(formatComp(c.comp)||'—')}</td>
-    <td>${pesc((c.skills||[]).slice(0,4).join(', ')||'—')}</td>
+    <td>${pesc(c.country||'')}</td>
+    <td class="cmp-comp">${pesc(formatComp(c.comp)||'')}</td>
+    <td>${pesc((c.skills||[]).slice(0,4).join(', ')||'')}</td>
     <td>${pesc(c.note || (c.detailedNote||'').split(/(?<=\.)\s/)[0] || '')}</td>
   </tr>`).join('');
   return `<div class="comparison-section fade-in">
