@@ -590,7 +590,9 @@ async function genPresentation(){
   prog.innerHTML='<span class="spinner dark"></span> Writing AI notes per candidate…';
   try{
     const processed=await processAll(picked,o,(i,n,name)=>{prog.innerHTML=`<span class="spinner dark"></span> ${i}/${n} — writing notes for <strong>${esc(name)}</strong>…`;});
-    _batch={batch:o.batchNumber, date:o.batchDate, cands:processed};
+    prog.innerHTML='<span class="spinner dark"></span> Building comparison scorecard…';
+    const scorecard=await buildScorecard(processed,o);
+    _batch={batch:o.batchNumber, date:o.batchDate, cands:processed, scorecard};
     _o=o; _presMeta={member,role,batch:o.batchNumber};
     _presHTML=buildPresentationHTML([_batch],o);
     // render preview IN-PAGE (iframe) — no pop-up, never blocked

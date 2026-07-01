@@ -213,6 +213,31 @@ async function processAll(cands, opts, onProgress){
   return out;
 }
 
+// Shared-rubric scorecard: derive 4 role-critical dimensions from the JD and rate
+// EVERY candidate 1-5 on the SAME dimensions (+ a short "best for" tag) so the
+// member can compare side by side. Returns {dimensions:[...], rows:[{i,scores,bestFor}]}.
+async function buildScorecard(cands, opts){
+  if(!cands.length) return null;
+  const profiles=cands.map((c,i)=>`[#${i}] ${c.first} — skills: ${(c.skills||[]).join(', ')||'n/a'} — ${(c.summary||'').slice(0,420)}`).join('\n');
+  const prompt=`${VOICE}
+
+You are building a side-by-side comparison scorecard for ${opts.member}'s ${opts.role} role.
+From the JD, choose EXACTLY 4 of the most decision-critical dimensions to compare candidates on. Short labels, 1-3 words (e.g. "QuickBooks", "US GAAP", "English", "Client comms"). Then rate EACH candidate 1-5 on EACH dimension (5 = excellent match for THIS role, 1 = weak), using ONLY their profile below. Scores must vary honestly across candidates and dimensions — not everyone is a 5. Also give each candidate a 1-2 word "bestFor" tag capturing their standout angle; vary them (e.g. Speed, Depth, Value, Leadership, Versatility, Reliability).
+
+JOB DESCRIPTION:
+${(opts.jd||'').slice(0,4000)}
+
+CANDIDATES (${cands.length}):
+${profiles}
+
+Return ONLY JSON: {"dimensions":["d1","d2","d3","d4"],"candidates":[{"i":0,"scores":[5,4,3,5],"bestFor":"Speed"}]}`;
+  try{
+    const d=parseJSON(await callClaude(prompt, 1200));
+    if(!d.dimensions||!d.candidates) return null;
+    return { dimensions:d.dimensions.slice(0,4).map(x=>(''+x).trim()), rows:d.candidates };
+  }catch(e){ return null; }
+}
+
 /* ---------- rendering ---------- */
 function scoreColor(s){return s>=85?'#1f7a5e':s>=70?'#093a3e':s>=55?'#a67714':'#b5502f'}
 function cvBlock(c){
@@ -273,6 +298,22 @@ function presComparison(cands){
       <thead><tr><th>Candidate</th><th>Location</th><th>Expected</th><th>Top skills</th><th>Headline</th></tr></thead>
       <tbody>${rows}</tbody></table></div></div>`;
 }
+function scoreDots(n){ n=Math.max(0,Math.min(5,Math.round(+n||0))); return `<span class="dot-on">${'●'.repeat(n)}</span><span class="dot-off">${'○'.repeat(5-n)}</span>`; }
+function presScorecard(b){
+  const sc=b.scorecard, cands=b.cands||[];
+  if(!sc || !sc.dimensions || !sc.dimensions.length || !cands.length) return presComparison(cands); // fallback (e.g. older batches)
+  const dims=sc.dimensions.slice(0,4);
+  const rowFor=i=>((sc.rows||[]).find(r=>r.i===i)||{scores:[],bestFor:''});
+  const head=`<tr><th>Candidate</th>${dims.map(d=>`<th>${pesc(d)}</th>`).join('')}<th>Languages</th><th>Available</th><th>Best for</th></tr>`;
+  const body=cands.map((c,i)=>{
+    const r=rowFor(i);
+    const langs=(c.languages||[]).filter(l=>l.name).map(l=>pesc(l.name)).join(', ');
+    return `<tr><td class="cmp-name">${pesc(c.first)}</td>${dims.map((d,di)=>`<td class="cmp-dots">${scoreDots((r.scores||[])[di])}</td>`).join('')}<td>${langs}</td><td>${c.video?'<span class="avail">▶ Video</span>':''}</td><td>${r.bestFor?`<span class="best-tag">${pesc(r.bestFor)}</span>`:''}</td></tr>`;
+  }).join('');
+  return `<div class="comparison-section fade-in"><div class="cmp-title">At a glance</div>
+    <div class="comparison-table-wrap"><table class="comparison-table scorecard"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    <div class="cmp-legend">Rated 1–5 against this role &nbsp;·&nbsp; <span class="dot-on">●●●●●</span> strong fit &nbsp;·&nbsp; <span class="dot-on">●●●</span><span class="dot-off">○○</span> developing</div></div>`;
+}
 function buildPresentationHTML(batches, o){
   const advisor=o.advisor||{};
   batches=(batches||[]).slice().sort((a,b)=>a.batch-b.batch);
@@ -327,6 +368,15 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
 .comparison-table tbody td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top}
 .comparison-table tbody tr:last-child td{border-bottom:none}.comparison-table tbody tr:hover{background:var(--bg-card-hover)}
 .comparison-table .cmp-comp{font-weight:700;color:var(--primary);white-space:nowrap}
+.comparison-table.scorecard th,.comparison-table.scorecard td{text-align:center}
+.comparison-table.scorecard th:first-child,.comparison-table.scorecard td:first-child{text-align:left}
+.comparison-table .cmp-name{font-weight:700;color:var(--text-primary);white-space:nowrap}
+.comparison-table .cmp-dots{letter-spacing:2px;font-size:13px;white-space:nowrap}
+.cmp-dots .dot-on{color:var(--primary)}.cmp-dots .dot-off{color:var(--border-strong)}
+.comparison-table .avail{color:#1f7a5e;font-weight:600;white-space:nowrap}
+.comparison-table .best-tag{display:inline-block;background:var(--tag-bg);color:var(--tag-color);font-family:var(--font-meta);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.cmp-legend{max-width:1100px;margin:12px auto 0;padding:0 40px;font-size:11px;color:var(--text-light);text-align:center}
+.cmp-legend .dot-on{color:var(--primary)}.cmp-legend .dot-off{color:var(--border-strong)}
 .candidate-card{max-width:1100px;margin:0 auto 32px;padding:0 40px}
 .card{background:var(--bg-card);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);transition:transform .3s,box-shadow .3s}
 .card:hover{transform:translateY(-2px);box-shadow:0 1px 3px rgba(0,0,0,.04),0 16px 48px rgba(0,0,0,.1)}.card.featured{box-shadow:var(--shadow-md),0 0 0 1px #a6771433}
@@ -386,7 +436,7 @@ body{font-family:var(--font-body);font-size:16px;color:var(--text-primary);backg
 <section class="candidates-section">
   <div class="candidates-header fade-in"><h2>Candidate Profiles</h2></div>
   ${batches.length>1?`<div class="batch-switcher fade-in">${batches.map(b=>`<button class="batch-btn${b.batch===active?' active':''}" data-b="${b.batch}" onclick="showBatch(${b.batch})">Batch ${b.batch}<span class="batch-count">${b.cands.length}</span></button>`).join('')}</div>`:''}
-  ${batches.map(b=>`<div class="batch-panel${b.batch===active?'':' hidden'}" id="batch-${b.batch}">${(b.cands||[]).map((c,i)=>presCandidateCard(c,i)).join('')}${presComparison(b.cands||[])}</div>`).join('')}
+  ${batches.map(b=>`<div class="batch-panel${b.batch===active?'':' hidden'}" id="batch-${b.batch}">${(b.cands||[]).map((c,i)=>presCandidateCard(c,i)).join('')}${presScorecard(b)}</div>`).join('')}
 </section>
 <script type="application/json" id="sm-batches">${dataJSON}</script>
 <div class="advisor-section fade-in"><div class="advisor-section-label">Your Talent Advisor</div>
